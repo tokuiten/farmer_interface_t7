@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>農場マップ</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        #canvas {
+            border: 2px solid #333;
+            background-color: white;
+            margin: 20px 0;
+        }
+        
+        .controls {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 10px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .color-box {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #333;
+        }
+        
+        .info {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>農場マップ</h1>
+    
+    <canvas id="canvas"></canvas>
+    
+    <div class="controls">
+        <div class="legend">
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #90EE90;"></div>
+                <span>畝</span>
+            </div>
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #F5F5F5; border: 1px solid #333;"></div>
+                <span>東西中央通路</span>
+            </div>
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #FFFFFF; border: 1px solid #333;"></div>
+                <span>畝間通路</span>
+            </div>
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #666666;"></div>
+                <span>柱</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="info">
+        <h3>農場仕様</h3>
+        <p>• ハウスサイズ: 東西32m × 南北62.5m</p>
+        <p>• エリア: 8区画（各エリア 東西8m × 南北約30m）</p>
+        <p>• 東西中央通路: 幅2.5m（南北の中央）</p>
+        <p>• 畝: 各エリア4本、長さ30m、幅60cm</p>
+        <p>• 畝間通路: 約1m</p>
+        <p>• 柱: 8m × 2.5mピッチ</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // スケール設定（1m = 20px - より詳細な表示のため）
+        const scale = 20;
+        const farmWidth = 32 * scale; // 640px
+        const farmHeight = 62.5 * scale; // 1250px
+        const centralPathWidth = 2.5 * scale; // 50px
+        const ridgeWidth = 0.6 * scale; // 12px
+        const ridgeLength = 30 * scale; // 600px
+        const pathWidth = 1 * scale; // 20px
+        const pillarSize = 0.3 * scale; // 6px
+        const areaWidth = 8 * scale; // 160px
+        
+        // マージンを追加
+        const margin = 40;
+        canvas.width = farmWidth + margin * 2;
+        canvas.height = farmHeight + margin * 2;
+        
+        // 色の定義
+        const colors = {
+            ridge: '#90EE90',        // 黄緑色
+            centralPath: '#F5F5F5',  // 非常に薄いグレー（ほぼ白）
+            pathBetween: '#FFFFFF',  // 白色（畝間通路）
+            pillar: '#666666',       // 濃いグレー
+            border: '#333333',       // 黒
+            background: '#FFFFFF',   // 白
+            text: '#000000'          // 黒（テキスト用）
+        };
+        
+        function drawFarm() {
+            // 背景をクリア
+            ctx.fillStyle = colors.background;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 農場全体を茶色で塗りつぶす（通路のベース）
+            ctx.fillStyle = colors.pathBetween;
+            ctx.fillRect(margin, margin, farmWidth, farmHeight);
+            
+            // 東西中央通路を描画
+            const centralPathY = margin + (farmHeight - centralPathWidth) / 2;
+            ctx.fillStyle = colors.centralPath;
+            ctx.fillRect(margin, centralPathY, farmWidth, centralPathWidth);
+            
+            // エリアと畝を描画
+            for (let i = 0; i < 8; i++) {
+                const row = i < 4 ? 0 : 1;
+                const col = i % 4;
+                const areaX = margin + col * areaWidth;
+                let areaY;
+                
+                if (row === 0) {
+                    // 北側エリア（1-4）
+                    areaY = margin;
+                } else {
+                    // 南側エリア（5-8）- 中央通路に直接接続
+                    areaY = centralPathY + centralPathWidth;
+                }
+                
+                // 畝を描画
+                for (let j = 0; j < 4; j++) {
+                    const ridgeX = areaX + pathWidth + j * (ridgeWidth + pathWidth);
+                    let ridgeY, adjustedRidgeLength;
+                    
+                    if (row === 0) {
+                        // 北側エリア - 上端から中央通路まで
+                        ridgeY = areaY + pathWidth;
+                        adjustedRidgeLength = centralPathY - ridgeY;
+                    } else {
+                        // 南側エリア - 中央通路から下端まで
+                        ridgeY = centralPathY + centralPathWidth;
+                        adjustedRidgeLength = (margin + farmHeight) - ridgeY - pathWidth;
+                    }
+                    
+                    ctx.fillStyle = colors.ridge;
+                    ctx.fillRect(ridgeX, ridgeY, ridgeWidth, adjustedRidgeLength);
+                }
+            }
+            
+            // 柱を描画
+            ctx.fillStyle = colors.pillar;
+            for (let i = 0; i <= 4; i++) {
+                for (let j = 0; j <= 25; j++) {
+                    const x = margin + i * areaWidth;
+                    const y = margin + j * 2.5 * scale;
+                    ctx.fillRect(x - pillarSize / 2, y - pillarSize / 2, pillarSize, pillarSize);
+                }
+            }
+            
+            // 農場の外枠
+            ctx.strokeStyle = colors.border;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(margin, margin, farmWidth, farmHeight);
+            
+            // エリア番号を最前面に表示（各エリアの南北方向の中央）
+            ctx.fillStyle = colors.text;
+            ctx.font = 'bold 18px Arial';
+            for (let i = 0; i < 8; i++) {
+                const row = i < 4 ? 0 : 1;
+                const col = i % 4;
+                const areaX = margin + col * areaWidth + areaWidth / 2 - 30;
+                let textY;
+                
+                if (row === 0) {
+                    // 北側エリア（1-4）- 北端から中央通路までの中央
+                    const areaTop = margin;
+                    const areaBottom = centralPathY;
+                    textY = (areaTop + areaBottom) / 2 + 5;
+                } else {
+                    // 南側エリア（5-8）- 中央通路から南端までの中央
+                    const areaTop = centralPathY + centralPathWidth;
+                    const areaBottom = margin + farmHeight;
+                    textY = (areaTop + areaBottom) / 2 + 5;
+                }
+                
+                ctx.fillText(`エリア${i + 1}`, areaX, textY);
+            }
+        }
+        
+        // 初期描画
+        drawFarm();
+    </script>
+</body>
+</html>
