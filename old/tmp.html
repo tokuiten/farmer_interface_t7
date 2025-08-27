@@ -1,0 +1,1340 @@
+// 中央通路エリア判定（拡張定義）
+        function isInCentralArea(x, y) {
+            const centralY = offsetY + LANE_LENGTH + CENTRAL_WIDTH / 2;
+            const centralAreaTop = centralY - CENTRAL_WIDTH / 2;
+            const centralAreaBottom = centralY + CENTRAL_WIDTH / 2;
+            
+            // Y座標が中央通路の幅内にあるかチェック
+            return y >= centralAreaTop && y <= centralAreaBottom;
+        }
+        
+        // ロボットが中央通路エリアにいるかチェック
+        function isRobotInCentralArea(robotId) {
+            const robot = robots[robotId];
+            if (!robot) return false;
+            
+            return isInCentralArea(robot.x, robot.y);
+        }
+        
+        // セグメントが中央通路エリアを通るかチェック
+        function segmentInvolvesCentralArea(segment) {
+            if (!segment || !isValidPoint(segment.from) || !isValidPoint(segment.to)) {
+                return false;
+            }
+            
+            // セグメントの開始点または終了点が中央通路エリアにある
+            return isInCentralArea(segment.from.x, segment.from.y) || 
+                   isInCentralArea(segment.to.x, segment.to.y);
+        }        // 中央通路エリア判定（拡張定義）
+        function isInCentralArea(x, y) {
+            const centralY = offsetY + LANE_LENGTH + CENTRAL_WIDTH / 2;
+            const centralAreaTop = centralY - CENTRAL_WIDTH / 2;
+            const centralAreaBottom = centralY + CENTRAL_WIDTH / 2;
+            
+            // Y座標が中央通路の幅内にあるかチェック
+            return y >= centralAreaTop && y <= centralAreaBottom;
+        }
+        
+        // ロボットが中央通路エリアにいるかチェック
+        function isRobotInCentralArea(robotId) {
+            const robot = robots[robotId];
+            if (!robot) return false;
+            
+            return isInCentralArea(robot.x, robot.y);
+        }
+        
+        // セグメントが中央通路エリアを通るかチェック
+        function segmentInvolvesCentralArea(segment) {
+            if (!segment || !isValidPoint(segment.from) || !isValidPoint(segment.to)) {
+                return false;
+            }
+            
+            // セグメントの開始点または終了点が中央通路エリアにある
+            return isInCentralArea(segment.from.x, segment.from.y) || 
+                   isInCentralArea(segment.to.x, segment.to.y);
+        }        // エラーハンドリング強化版のアニメーション経路生成
+        function generateAnimationPaths() {
+            try {
+                generateRobotAnimationPath('robot1', currentPaths.robot1);
+                generateRobotAnimationPath('robot2', currentPaths.robot2);
+            } catch (error) {
+                console.error('アニメーション経路生成エラー:', error);
+                throw error;
+            }
+        }<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>農場マップとロボット経路システム</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f8ff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .version-info {
+            text-align: right;
+            color: #e74c3c;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 5px;
+            background-color: #fff3cd;
+            border-radius: 5px;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .robot-controls {
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #f8f9fa;
+        }
+        .robot-row {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            display: inline-block;
+            margin: 5px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        select, button {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        button:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        #animateBtn {
+            background-color: #3498db;
+        }
+        #animateBtn:hover:not(:disabled) {
+            background-color: #2980b9;
+        }
+        #stopBtn {
+            background-color: #e74c3c;
+        }
+        #stopBtn:hover:not(:disabled) {
+            background-color: #c0392b;
+        }
+        .control-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+        #map {
+            background: white;
+            border: 2px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #2196F3;
+        }
+        .path-info {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚜 農場マップとロボット経路システム</h1>
+        <div class="version-info">
+            Version 2.8.1 - 2025/07/17 - 関数定義エラー修正版 (中央通路エリア判定関数の定義位置修正)
+        </div>
+        
+        <div class="controls">
+            <div class="robot-controls">
+                <h3>🤖 ロボット1 設定</h3>
+                <div class="robot-row">
+                    <div class="control-group">
+                        <label for="startArea1">開始エリア:</label>
+                        <select id="startArea1">
+                            <option value="1">エリア1</option>
+                            <option value="2">エリア2</option>
+                            <option value="3">エリア3</option>
+                            <option value="4">エリア4</option>
+                            <option value="5">エリア5</option>
+                            <option value="6">エリア6</option>
+                            <option value="7">エリア7</option>
+                            <option value="8">エリア8</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="startLane1">開始通路:</label>
+                        <select id="startLane1">
+                            <option value="1">通路1</option>
+                            <option value="2">通路2</option>
+                            <option value="3">通路3</option>
+                            <option value="4">通路4</option>
+                            <option value="5">通路5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="endArea1">終了エリア:</label>
+                        <select id="endArea1">
+                            <option value="1">エリア1</option>
+                            <option value="2">エリア2</option>
+                            <option value="3">エリア3</option>
+                            <option value="4">エリア4</option>
+                            <option value="5">エリア5</option>
+                            <option value="6">エリア6</option>
+                            <option value="7">エリア7</option>
+                            <option value="8">エリア8</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="endLane1">終了通路:</label>
+                        <select id="endLane1">
+                            <option value="1">通路1</option>
+                            <option value="2">通路2</option>
+                            <option value="3">通路3</option>
+                            <option value="4">通路4</option>
+                            <option value="5">通路5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="direction1">回転方向:</label>
+                        <select id="direction1">
+                            <option value="right">時計回り</option>
+                            <option value="left">反時計回り</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="robot-controls">
+                <h3>🤖 ロボット2 設定</h3>
+                <div class="robot-row">
+                    <div class="control-group">
+                        <label for="startArea2">開始エリア:</label>
+                        <select id="startArea2">
+                            <option value="1">エリア1</option>
+                            <option value="2">エリア2</option>
+                            <option value="3">エリア3</option>
+                            <option value="4">エリア4</option>
+                            <option value="5" selected>エリア5</option>
+                            <option value="6">エリア6</option>
+                            <option value="7">エリア7</option>
+                            <option value="8">エリア8</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="startLane2">開始通路:</label>
+                        <select id="startLane2">
+                            <option value="1">通路1</option>
+                            <option value="2">通路2</option>
+                            <option value="3">通路3</option>
+                            <option value="4">通路4</option>
+                            <option value="5">通路5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="endArea2">終了エリア:</label>
+                        <select id="endArea2">
+                            <option value="1">エリア1</option>
+                            <option value="2">エリア2</option>
+                            <option value="3">エリア3</option>
+                            <option value="4">エリア4</option>
+                            <option value="5">エリア5</option>
+                            <option value="6">エリア6</option>
+                            <option value="7">エリア7</option>
+                            <option value="8" selected>エリア8</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="endLane2">終了通路:</label>
+                        <select id="endLane2">
+                            <option value="1">通路1</option>
+                            <option value="2">通路2</option>
+                            <option value="3">通路3</option>
+                            <option value="4">通路4</option>
+                            <option value="5" selected>通路5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="direction2">回転方向:</label>
+                        <select id="direction2">
+                            <option value="right">時計回り</option>
+                            <option value="left" selected>反時計回り</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-buttons">
+                <button onclick="calculatePaths()">経路計算（2台）</button>
+                <button onclick="clearPath()">クリア</button>
+                <button onclick="startAnimation()" id="animateBtn" disabled>🤖 アニメーション開始</button>
+                <button onclick="stopAnimation()" id="stopBtn" disabled>⏹ 停止</button>
+            </div>
+        </div>
+        
+        <canvas id="map" width="1000" height="600"></canvas>
+        
+        <div class="info">
+            <h3>農場レイアウト仕様</h3>
+            <p><strong>エリア構成:</strong> 1〜4（北側）、5〜8（南側）、各エリアに5本の通路</p>
+            <p><strong>通路仕様:</strong> 幅1m、長さ25m、通路間1m、南北方向</p>
+            <p><strong>中央通路:</strong> 幅2m、東西方向、全エリアを接続（通路侵入部も含む）</p>
+            <p><strong>衝突回避:</strong> ロボット1が優先権を持ち、ロボット2は中央通路エリア進入前に待機</p>
+        </div>
+        
+        <div id="pathInfo" class="path-info" style="display: none;">
+            <h4>🤖 ロボット経路情報</h4>
+            <div id="pathDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数の定義
+        const canvas = document.getElementById('map');
+        const ctx = canvas.getContext('2d');
+        
+        // 座標系設定
+        const scale = 10;
+        const offsetX = 50;
+        const offsetY = 50;
+        
+        // 農場レイアウト定数
+        const LANE_WIDTH = 1 * scale;
+        const LANE_LENGTH = 25 * scale;
+        const LANE_SPACING = 1 * scale;
+        const CENTRAL_WIDTH = 2 * scale;
+        const AREA_WIDTH = 5 * (LANE_WIDTH + LANE_SPACING) - LANE_SPACING;
+        
+        // ロボット状態管理（バグ修正版）
+        let robots = {
+            robot1: {
+                x: 0, y: 0, angle: 0, currentStep: 0,
+                animationPath: [], color: '#e74c3c', name: 'ロボット1',
+                state: 'idle', waitCounter: 0, priority: 1,
+                segmentProgress: 0, // セグメント内進行度を追加
+                lastUpdateTime: 0   // パフォーマンス管理用
+            },
+            robot2: {
+                x: 0, y: 0, angle: 0, currentStep: 0,
+                animationPath: [], color: '#2ecc71', name: 'ロボット2',
+                state: 'idle', waitCounter: 0, priority: 2,
+                segmentProgress: 0,
+                lastUpdateTime: 0
+            }
+        };
+        
+        let currentPaths = { robot1: null, robot2: null };
+        let animationId = null;
+        let isAnimating = false;
+        let lastFrameTime = 0; // フレームレート管理用
+        
+        // 基本描画関数
+        function drawMap() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            drawCentralPath();
+            
+            for (let area = 1; area <= 8; area++) {
+                drawArea(area);
+            }
+            
+            drawLabels();
+        }
+        
+        function drawCentralPath() {
+            const centralY = offsetY + LANE_LENGTH + CENTRAL_WIDTH / 2;
+            const startX = offsetX;
+            const endX = offsetX + 4 * AREA_WIDTH;
+            
+            ctx.fillStyle = '#ffd700';
+            ctx.fillRect(startX, centralY - CENTRAL_WIDTH / 2, endX - startX, CENTRAL_WIDTH);
+            
+            ctx.strokeStyle = '#f39c12';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(startX, centralY - CENTRAL_WIDTH / 2, endX - startX, CENTRAL_WIDTH);
+            
+            ctx.fillStyle = '#d35400';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('中央通路', startX + (endX - startX) / 2, centralY + 5);
+        }
+        
+        function drawArea(areaNum) {
+            const isNorth = areaNum <= 4;
+            const col = (areaNum - 1) % 4;
+            
+            const areaX = offsetX + col * AREA_WIDTH;
+            const areaY = isNorth ? offsetY : offsetY + LANE_LENGTH + CENTRAL_WIDTH;
+            
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            const labelY = isNorth ? areaY - 10 : areaY + LANE_LENGTH + 25;
+            ctx.fillText(`エリア${areaNum}`, areaX + AREA_WIDTH / 2, labelY);
+            
+            for (let lane = 1; lane <= 5; lane++) {
+                drawLane(areaNum, lane, areaX, areaY, isNorth);
+            }
+        }
+        
+        function drawLane(areaNum, laneNum, areaX, areaY, isNorth) {
+            const laneX = areaX + (laneNum - 1) * (LANE_WIDTH + LANE_SPACING);
+            
+            ctx.fillStyle = '#ecf0f1';
+            ctx.fillRect(laneX, areaY, LANE_WIDTH, LANE_LENGTH);
+            
+            ctx.strokeStyle = '#bdc3c7';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(laneX, areaY, LANE_WIDTH, LANE_LENGTH);
+            
+            ctx.fillStyle = '#7f8c8d';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            const textY = isNorth ? areaY + LANE_LENGTH - 5 : areaY + 15;
+            ctx.fillText(laneNum.toString(), laneX + LANE_WIDTH / 2, textY);
+        }
+        
+        function drawLabels() {
+            ctx.fillStyle = '#34495e';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'left';
+            
+            ctx.fillText('北', offsetX - 30, offsetY + LANE_LENGTH / 2);
+            ctx.fillText('南', offsetX - 30, offsetY + LANE_LENGTH + CENTRAL_WIDTH + LANE_LENGTH / 2);
+            ctx.fillText('西', offsetX + 2 * AREA_WIDTH - 10, offsetY + 2 * LANE_LENGTH + CENTRAL_WIDTH + 30);
+            ctx.fillText('東', offsetX + 4 * AREA_WIDTH - 20, offsetY + 2 * LANE_LENGTH + CENTRAL_WIDTH + 30);
+        }
+        
+        // 座標計算関数
+        function getIntersectionPoint(area, lane) {
+            const isNorth = area <= 4;
+            const col = (area - 1) % 4;
+            
+            const areaX = offsetX + col * AREA_WIDTH;
+            const laneX = areaX + (lane - 1) * (LANE_WIDTH + LANE_SPACING) + LANE_WIDTH / 2;
+            const centralY = offsetY + LANE_LENGTH + CENTRAL_WIDTH / 2;
+            
+            return { x: laneX, y: centralY };
+        }
+        
+        function getLaneEndPoint(area, lane) {
+            const isNorth = area <= 4;
+            const col = (area - 1) % 4;
+            
+            const areaX = offsetX + col * AREA_WIDTH;
+            const laneX = areaX + (lane - 1) * (LANE_WIDTH + LANE_SPACING) + LANE_WIDTH / 2;
+            
+            let endY;
+            if (isNorth) {
+                endY = offsetY;
+            } else {
+                endY = offsetY + LANE_LENGTH + CENTRAL_WIDTH + LANE_LENGTH;
+            }
+            
+            return { x: laneX, y: endY };
+        }
+        
+        function calculateAngle(from, to) {
+            return Math.atan2(to.y - from.y, to.x - from.x);
+        }
+        
+        // 中央通路エリア判定関数群（定義位置修正）
+        function isInCentralArea(x, y) {
+            const centralY = offsetY + LANE_LENGTH + CENTRAL_WIDTH / 2;
+            const centralAreaTop = centralY - CENTRAL_WIDTH / 2;
+            const centralAreaBottom = centralY + CENTRAL_WIDTH / 2;
+            
+            // Y座標が中央通路の幅内にあるかチェック
+            return y >= centralAreaTop && y <= centralAreaBottom;
+        }
+        
+        // ロボットが中央通路エリアにいるかチェック
+        function isRobotInCentralArea(robotId) {
+            const robot = robots[robotId];
+            if (!robot) return false;
+            
+            return isInCentralArea(robot.x, robot.y);
+        }
+        
+        // セグメントが中央通路エリアを通るかチェック
+        function segmentInvolvesCentralArea(segment) {
+            if (!segment || !isValidPoint(segment.from) || !isValidPoint(segment.to)) {
+                return false;
+            }
+            
+            // セグメントの開始点または終了点が中央通路エリアにある
+            return isInCentralArea(segment.from.x, segment.from.y) || 
+                   isInCentralArea(segment.to.x, segment.to.y);
+        }
+        
+        // エラーハンドリング強化版の経路計算
+        function calculatePaths() {
+            try {
+                const robot1Config = {
+                    startArea: parseInt(document.getElementById('startArea1').value),
+                    startLane: parseInt(document.getElementById('startLane1').value),
+                    endArea: parseInt(document.getElementById('endArea1').value),
+                    endLane: parseInt(document.getElementById('endLane1').value),
+                    direction: document.getElementById('direction1').value
+                };
+                
+                const robot2Config = {
+                    startArea: parseInt(document.getElementById('startArea2').value),
+                    startLane: parseInt(document.getElementById('startLane2').value),
+                    endArea: parseInt(document.getElementById('endArea2').value),
+                    endLane: parseInt(document.getElementById('endLane2').value),
+                    direction: document.getElementById('direction2').value
+                };
+                
+                // 入力値検証
+                if (!validateConfig(robot1Config) || !validateConfig(robot2Config)) {
+                    console.error('無効な設定値が検出されました');
+                    return;
+                }
+                
+                const workSequence1 = generateWorkSequence(robot1Config);
+                const workSequence2 = generateWorkSequence(robot2Config);
+                
+                if (!workSequence1.length || !workSequence2.length) {
+                    console.error('作業シーケンスの生成に失敗しました');
+                    return;
+                }
+                
+                currentPaths = {
+                    robot1: { ...robot1Config, workSequence: workSequence1 },
+                    robot2: { ...robot2Config, workSequence: workSequence2 }
+                };
+                
+                drawMap();
+                drawMultiRobotPaths();
+                showMultiRobotPathInfo();
+                
+                try {
+                    generateAnimationPaths();
+                } catch (pathError) {
+                    console.error('アニメーション経路生成で追加エラー:', pathError);
+                    throw pathError;
+                }
+                
+                document.getElementById('animateBtn').disabled = false;
+                
+            } catch (error) {
+                console.error('経路計算エラー:', error);
+                alert('経路計算中にエラーが発生しました。設定を確認してください。');
+            }
+        }
+        
+        // 設定値検証関数
+        function validateConfig(config) {
+            const { startArea, startLane, endArea, endLane, direction } = config;
+            
+            if (isNaN(startArea) || startArea < 1 || startArea > 8) return false;
+            if (isNaN(endArea) || endArea < 1 || endArea > 8) return false;
+            if (isNaN(startLane) || startLane < 1 || startLane > 5) return false;
+            if (isNaN(endLane) || endLane < 1 || endLane > 5) return false;
+            if (!['right', 'left'].includes(direction)) return false;
+            
+            return true;
+        }
+        
+        function generateWorkSequence(config) {
+            const { startArea, startLane, endArea, endLane, direction } = config;
+            const sequence = [];
+            
+            if (startArea === endArea) {
+                const lanes = [];
+                if (direction === 'right') {
+                    for (let lane = startLane; lane <= endLane; lane++) {
+                        lanes.push(lane);
+                    }
+                } else {
+                    for (let lane = startLane; lane >= endLane; lane--) {
+                        lanes.push(lane);
+                    }
+                }
+                
+                lanes.forEach(lane => {
+                    sequence.push({ area: startArea, lane: lane, action: 'work' });
+                });
+            } else {
+                const areas = getAreaSequence(startArea, endArea, direction);
+                
+                areas.forEach((area, areaIndex) => {
+                    let startLaneForArea, endLaneForArea;
+                    
+                    if (area === startArea) {
+                        startLaneForArea = startLane;
+                        if (direction === 'right') {
+                            endLaneForArea = area <= 4 ? 5 : 1;
+                        } else {
+                            endLaneForArea = area <= 4 ? 1 : 5;
+                        }
+                    } else if (area === endArea) {
+                        const isNorthArea = area <= 4;
+                        const prevArea = areas[areaIndex - 1];
+                        const prevIsNorth = prevArea <= 4;
+                        
+                        if (isNorthArea === prevIsNorth) {
+                            if (isNorthArea) {
+                                startLaneForArea = direction === 'right' ? 1 : 5;
+                            } else {
+                                startLaneForArea = direction === 'right' ? 5 : 1;
+                            }
+                        } else {
+                            if (isNorthArea) {
+                                startLaneForArea = direction === 'right' ? 1 : 5;
+                            } else {
+                                startLaneForArea = direction === 'right' ? 5 : 1;
+                            }
+                        }
+                        endLaneForArea = endLane;
+                    } else {
+                        const isNorthArea = area <= 4;
+                        const prevArea = areas[areaIndex - 1];
+                        const prevIsNorth = prevArea <= 4;
+                        
+                        if (isNorthArea === prevIsNorth) {
+                            if (isNorthArea) {
+                                startLaneForArea = direction === 'right' ? 1 : 5;
+                                endLaneForArea = direction === 'right' ? 5 : 1;
+                            } else {
+                                startLaneForArea = direction === 'right' ? 5 : 1;
+                                endLaneForArea = direction === 'right' ? 1 : 5;
+                            }
+                        } else {
+                            if (isNorthArea) {
+                                startLaneForArea = direction === 'right' ? 1 : 5;
+                                endLaneForArea = direction === 'right' ? 5 : 1;
+                            } else {
+                                startLaneForArea = direction === 'right' ? 5 : 1;
+                                endLaneForArea = direction === 'right' ? 1 : 5;
+                            }
+                        }
+                    }
+                    
+                    if (startLaneForArea <= endLaneForArea) {
+                        for (let lane = startLaneForArea; lane <= endLaneForArea; lane++) {
+                            sequence.push({ area: area, lane: lane, action: 'work' });
+                        }
+                    } else {
+                        for (let lane = startLaneForArea; lane >= endLaneForArea; lane--) {
+                            sequence.push({ area: area, lane: lane, action: 'work' });
+                        }
+                    }
+                });
+            }
+            
+            return sequence;
+        }
+        
+        function getAreaSequence(startArea, endArea, direction) {
+            const clockwiseOrder = [1, 2, 3, 4, 8, 7, 6, 5];
+            const counterClockwiseOrder = [1, 5, 6, 7, 8, 4, 3, 2];
+            
+            const order = direction === 'right' ? clockwiseOrder : counterClockwiseOrder;
+            
+            const startIndex = order.indexOf(startArea);
+            const endIndex = order.indexOf(endArea);
+            
+            const sequence = [];
+            let currentIndex = startIndex;
+            
+            sequence.push(order[currentIndex]);
+            
+            while (order[currentIndex] !== endArea) {
+                currentIndex = (currentIndex + 1) % order.length;
+                sequence.push(order[currentIndex]);
+            }
+            
+            return sequence;
+        }
+        
+        // アニメーション経路生成関数（修正位置）
+        function generateAnimationPaths() {
+            try {
+                generateRobotAnimationPath('robot1', currentPaths.robot1);
+                generateRobotAnimationPath('robot2', currentPaths.robot2);
+            } catch (error) {
+                console.error('アニメーション経路生成エラー:', error);
+                throw error;
+            }
+        }
+        
+        // エラーハンドリング強化版のアニメーション経路生成
+        function generateRobotAnimationPath(robotId, pathData) {
+            try {
+                if (!pathData || !pathData.workSequence || !Array.isArray(pathData.workSequence)) {
+                    console.error(`${robotId}: 無効なパスデータ`);
+                    return;
+                }
+                
+                const animPath = [];
+                const sequence = pathData.workSequence;
+                
+                sequence.forEach((work, index) => {
+                    // 作業データの検証
+                    if (!work || typeof work.area !== 'number' || typeof work.lane !== 'number') {
+                        console.error(`${robotId}: 無効な作業データ at index ${index}`, work);
+                        return;
+                    }
+                    
+                    const intersectionPoint = getIntersectionPoint(work.area, work.lane);
+                    const endPoint = getLaneEndPoint(work.area, work.lane);
+                    
+                    // 座標の検証
+                    if (!isValidPoint(intersectionPoint) || !isValidPoint(endPoint)) {
+                        console.error(`${robotId}: 無効な座標 at index ${index}`);
+                        return;
+                    }
+                    
+                    if (index > 0) {
+                        const prevWork = sequence[index - 1];
+                        const prevIntersection = getIntersectionPoint(prevWork.area, prevWork.lane);
+                        
+                        if (isValidPoint(prevIntersection)) {
+                            animPath.push({
+                                type: 'transition',
+                                from: { x: prevIntersection.x, y: prevIntersection.y },
+                                to: { x: intersectionPoint.x, y: intersectionPoint.y },
+                                workIndex: index,
+                                robotId: robotId
+                            });
+                        }
+                    }
+                    
+                    animPath.push({
+                        type: 'outbound',
+                        from: { x: intersectionPoint.x, y: intersectionPoint.y },
+                        to: { x: endPoint.x, y: endPoint.y },
+                        workIndex: index,
+                        robotId: robotId
+                    });
+                    
+                    animPath.push({
+                        type: 'return',
+                        from: { x: endPoint.x, y: endPoint.y },
+                        to: { x: intersectionPoint.x, y: intersectionPoint.y },
+                        workIndex: index,
+                        robotId: robotId
+                    });
+                });
+                
+                robots[robotId].animationPath = animPath;
+                
+                if (animPath.length > 0 && isValidPoint(animPath[0].from)) {
+                    robots[robotId].x = animPath[0].from.x;
+                    robots[robotId].y = animPath[0].from.y;
+                    robots[robotId].currentStep = 0;
+                    robots[robotId].segmentProgress = 0;
+                    robots[robotId].angle = calculateAngle(animPath[0].from, animPath[0].to);
+                    robots[robotId].state = 'working';
+                    robots[robotId].waitCounter = 0;
+                } else {
+                    console.error(`${robotId}: アニメーションパスが空または無効`);
+                }
+                
+            } catch (error) {
+                console.error(`${robotId}: アニメーション経路生成エラー:`, error);
+            }
+        }
+        
+        // 座標検証関数
+        function isValidPoint(point) {
+            return point && 
+                   typeof point.x === 'number' && 
+                   typeof point.y === 'number' && 
+                   isFinite(point.x) && 
+                   isFinite(point.y);
+        }
+        
+        // 中央通路エリア拡張対応の衝突回避システム
+        function canProceed(robotId, segment) {
+            try {
+                const robot = robots[robotId];
+                const otherRobotId = robotId === 'robot1' ? 'robot2' : 'robot1';
+                const otherRobot = robots[otherRobotId];
+                
+                if (!robot || !otherRobot || !segment) {
+                    console.error(`${robotId}: 衝突回避判定でnullデータ検出`);
+                    return false;
+                }
+                
+                // 中央通路エリアに関わるセグメントかチェック
+                if (segment.type === 'transition' || segmentInvolvesCentralArea(segment)) {
+                    
+                    // 相手が中央通路エリアにいるかチェック（位置ベース）
+                    if (isRobotInCentralArea(otherRobotId)) {
+                        console.log(`${robotId}: 相手が中央通路エリア使用中のため待機`);
+                        return false;
+                    }
+                    
+                    // 相手が中央通路エリアに関わる動作をしているかチェック（状態ベース）
+                    if (otherRobot.state === 'in_central' || otherRobot.state === 'requesting_central') {
+                        // さらに詳細チェック：相手の現在セグメントが中央通路エリアに関わるか
+                        const otherCurrentSegment = otherRobot.animationPath[otherRobot.currentStep];
+                        if (otherCurrentSegment && 
+                            (otherCurrentSegment.type === 'transition' || segmentInvolvesCentralArea(otherCurrentSegment))) {
+                            
+                            // 優先度で判定
+                            if (robot.priority > otherRobot.priority) {
+                                console.log(`${robotId}: 優先度が低いため待機`);
+                                return false;
+                            }
+                        }
+                    }
+                    
+                    console.log(`${robotId}: 中央通路エリア進入許可`);
+                    return true;
+                }
+                
+                return true; // 中央通路エリアに関わらない動作は常に許可
+                
+            } catch (error) {
+                console.error(`${robotId}: 衝突回避判定エラー:`, error);
+                return false; // エラー時は安全のため待機
+            }
+        }
+        
+        // パフォーマンス改善版アニメーション制御
+        function startAnimation() {
+            try {
+                if (!robots.robot1.animationPath || !robots.robot1.animationPath.length || 
+                    !robots.robot2.animationPath || !robots.robot2.animationPath.length) {
+                    console.error('アニメーションパスが無効です');
+                    return;
+                }
+                
+                isAnimating = true;
+                lastFrameTime = performance.now();
+                
+                // ロボット状態初期化
+                Object.keys(robots).forEach(robotId => {
+                    const robot = robots[robotId];
+                    robot.currentStep = 0;
+                    robot.segmentProgress = 0;
+                    robot.state = 'working';
+                    robot.waitCounter = 0;
+                    robot.lastUpdateTime = lastFrameTime;
+                });
+                
+                document.getElementById('animateBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                
+                animate();
+                
+            } catch (error) {
+                console.error('アニメーション開始エラー:', error);
+                stopAnimation();
+            }
+        }
+        
+        function stopAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            isAnimating = false;
+            document.getElementById('animateBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            
+            try {
+                drawMap();
+                if (currentPaths.robot1 && currentPaths.robot2) {
+                    drawMultiRobotPaths();
+                }
+            } catch (error) {
+                console.error('アニメーション停止時の描画エラー:', error);
+            }
+        }
+        
+        function animate(currentTime) {
+            if (!isAnimating) {
+                stopAnimation();
+                return;
+            }
+            
+            try {
+                // フレームレート制御（60FPS）
+                const deltaTime = currentTime - lastFrameTime;
+                if (deltaTime < 16.67) { // 約60FPS
+                    animationId = requestAnimationFrame(animate);
+                    return;
+                }
+                lastFrameTime = currentTime;
+                
+                const robot1Complete = robots.robot1.currentStep >= robots.robot1.animationPath.length;
+                const robot2Complete = robots.robot2.currentStep >= robots.robot2.animationPath.length;
+                
+                if (robot1Complete && robot2Complete) {
+                    stopAnimation();
+                    return;
+                }
+                
+                // ロボット移動処理
+                if (!robot1Complete) {
+                    moveRobot('robot1', deltaTime);
+                }
+                
+                if (!robot2Complete) {
+                    moveRobot('robot2', deltaTime);
+                }
+                
+                // 描画（フレームレート制御付き）
+                if (deltaTime >= 16.67) {
+                    renderFrame();
+                }
+                
+                animationId = requestAnimationFrame(animate);
+                
+            } catch (error) {
+                console.error('アニメーションエラー:', error);
+                stopAnimation();
+            }
+        }
+        
+        // 描画最適化
+        function renderFrame() {
+            try {
+                drawMap();
+                if (currentPaths.robot1 && currentPaths.robot2) {
+                    drawMultiRobotPaths();
+                }
+                drawRobots();
+            } catch (error) {
+                console.error('フレーム描画エラー:', error);
+            }
+        }
+        
+        // 中央通路エリア拡張対応のロボット移動処理
+        function moveRobot(robotId, deltaTime = 16.67) {
+            try {
+                const robot = robots[robotId];
+                
+                // 安全性チェック
+                if (!robot || !robot.animationPath || robot.currentStep >= robot.animationPath.length) {
+                    return;
+                }
+                
+                const currentSegment = robot.animationPath[robot.currentStep];
+                
+                if (!currentSegment || !isValidPoint(currentSegment.from) || !isValidPoint(currentSegment.to)) {
+                    console.error(`${robotId}: 無効なセグメント at step ${robot.currentStep}`);
+                    robot.currentStep++;
+                    return;
+                }
+                
+                const speed = 2; // ピクセル/フレーム
+                
+                // 中央通路エリアに関わる動作の処理
+                const involvesCentralArea = currentSegment.type === 'transition' || segmentInvolvesCentralArea(currentSegment);
+                
+                if (involvesCentralArea) {
+                    // 中央通路エリアに入る前または入っている間の処理
+                    
+                    // まだ中央通路エリアに入っていない場合
+                    if (!isRobotInCentralArea(robotId) && robot.segmentProgress === 0) {
+                        // 中央通路エリア進入要求状態に変更
+                        if (robot.state !== 'requesting_central' && robot.state !== 'waiting_at_lane') {
+                            robot.state = 'requesting_central';
+                        }
+                        
+                        // 中央通路エリア進入可能かチェック
+                        if (!canProceed(robotId, currentSegment)) {
+                            robot.state = 'waiting_at_lane'; // 通路内で待機
+                            robot.waitCounter++;
+                            return; // 通路内で停止
+                        }
+                        
+                        // 進入許可が出た場合
+                        robot.state = 'in_central';
+                    }
+                    
+                    // 既に中央通路エリアにいるか移動中の場合
+                    if (robot.state === 'in_central' || isRobotInCentralArea(robotId)) {
+                        robot.state = 'in_central';
+                        // 中央通路エリア移動継続
+                    } else {
+                        // 通路内待機中の再チェック
+                        if (canProceed(robotId, currentSegment)) {
+                            robot.state = 'in_central';
+                        } else {
+                            robot.waitCounter++;
+                            return; // 通路内で待機継続
+                        }
+                    }
+                } else {
+                    // 中央通路エリアに関わらない通路内作業
+                    if (robot.state !== 'working') {
+                        robot.state = 'working';
+                    }
+                }
+                
+                // 移動計算の精度向上
+                const dx = currentSegment.to.x - currentSegment.from.x;
+                const dy = currentSegment.to.y - currentSegment.from.y;
+                const totalDistance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (totalDistance < 0.1) { // 極小距離の処理
+                    robot.x = currentSegment.to.x;
+                    robot.y = currentSegment.to.y;
+                    robot.currentStep++;
+                    robot.segmentProgress = 0;
+                    onSegmentComplete(robotId, currentSegment);
+                    return;
+                }
+                
+                // セグメント進行度ベースの移動
+                const moveDistance = speed;
+                robot.segmentProgress += moveDistance / totalDistance;
+                
+                if (robot.segmentProgress >= 1.0) {
+                    // セグメント完了
+                    robot.x = currentSegment.to.x;
+                    robot.y = currentSegment.to.y;
+                    robot.currentStep++;
+                    robot.segmentProgress = 0;
+                    onSegmentComplete(robotId, currentSegment);
+                } else {
+                    // 中間位置計算
+                    robot.x = currentSegment.from.x + dx * robot.segmentProgress;
+                    robot.y = currentSegment.from.y + dy * robot.segmentProgress;
+                    robot.angle = calculateAngle(currentSegment.from, currentSegment.to);
+                }
+                
+                robot.waitCounter = 0; // 移動時は待機カウンターリセット
+                
+            } catch (error) {
+                console.error(`${robotId}: 移動処理エラー:`, error);
+                // エラー時は次のセグメントに進む
+                robots[robotId].currentStep++;
+            }
+        }
+        
+        // セグメント完了時の状態管理改善
+        function onSegmentComplete(robotId, segment) {
+            try {
+                const robot = robots[robotId];
+                
+                if (!robot || !segment) {
+                    console.error(`${robotId}: onSegmentComplete で無効なデータ`);
+                    return;
+                }
+                
+                // 状態遷移の明確化
+                switch (segment.type) {
+                    case 'transition':
+                        robot.state = 'working'; // 中央通路移動完了 → 作業状態
+                        break;
+                    case 'outbound':
+                    case 'return':
+                        robot.state = 'working'; // 通路内作業完了 → 作業状態維持
+                        break;
+                    default:
+                        console.warn(`${robotId}: 未知のセグメントタイプ: ${segment.type}`);
+                        robot.state = 'working';
+                }
+                
+                robot.waitCounter = 0;
+                robot.segmentProgress = 0;
+                
+            } catch (error) {
+                console.error(`${robotId}: セグメント完了処理エラー:`, error);
+            }
+        }
+        
+        function drawRobots() {
+            drawRobot(robots.robot1);
+            drawRobot(robots.robot2);
+        }
+        
+        function drawRobot(robot) {
+            if (robot.currentStep >= robot.animationPath.length) return;
+            
+            const size = 8;
+            
+            ctx.save();
+            ctx.translate(robot.x, robot.y);
+            ctx.rotate(robot.angle);
+            
+            let fillColor = robot.color;
+            let strokeColor = robot.color === '#e74c3c' ? '#c0392b' : '#27ae60';
+            
+            if (robot.state === 'waiting_at_lane') {
+                const blinkCycle = Math.floor(robot.waitCounter / 15) % 2;
+                if (blinkCycle === 0) {
+                    fillColor = '#f39c12';
+                    strokeColor = '#e67e22';
+                }
+            }
+            
+            ctx.fillStyle = fillColor;
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.moveTo(size, 0);
+            ctx.lineTo(-size/2, size/2);
+            ctx.lineTo(-size/2, -size/2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(0, 0, 2, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // 状態表示
+            ctx.fillStyle = robot.color;
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            const stateText = getStateDisplayText(robot.state);
+            ctx.fillText(`${robot.name.slice(-1)}:${stateText}`, robot.x, robot.y - 15);
+            
+            if (robot.state === 'waiting_at_lane' && robot.waitCounter > 0) {
+                ctx.fillStyle = '#f39c12';
+                ctx.font = '8px Arial';
+                ctx.fillText(`通路待機${Math.floor(robot.waitCounter/30)}s`, robot.x, robot.y - 25);
+            }
+        }
+        
+        function getStateDisplayText(state) {
+            switch(state) {
+                case 'working': return '作業';
+                case 'requesting_central': return '要求';
+                case 'in_central': return '移動';
+                case 'waiting': return '待機'; // 中央通路での待機（旧仕様）
+                case 'waiting_at_lane': return '通路待機'; // 通路内での待機（新仕様）
+                default: return state;
+            }
+        }
+        
+        // 経路描画
+        function drawMultiRobotPaths() {
+            if (!currentPaths.robot1 || !currentPaths.robot2) return;
+            
+            drawRobotPath(currentPaths.robot1, robots.robot1.color, 1);
+            drawRobotPath(currentPaths.robot2, robots.robot2.color, 2);
+        }
+        
+        function drawRobotPath(pathData, color, robotNum) {
+            if (!pathData || !pathData.workSequence) return;
+            
+            const sequence = pathData.workSequence;
+            
+            sequence.forEach((work, index) => {
+                const intersectionPoint = getIntersectionPoint(work.area, work.lane);
+                const endPoint = getLaneEndPoint(work.area, work.lane);
+                
+                ctx.fillStyle = color;
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                const offsetY = robotNum === 1 ? -15 : -25;
+                ctx.fillText(`R${robotNum}-${index + 1}`, intersectionPoint.x, intersectionPoint.y + offsetY);
+                
+                drawRobotWorkRoute(intersectionPoint, endPoint, index, color, robotNum);
+            });
+            
+            drawRobotTransitionPaths(sequence, color, robotNum);
+        }
+        
+        function drawRobotWorkRoute(startPoint, endPoint, workIndex, color, robotNum) {
+            const lineWidth = robotNum === 1 ? 2 : 1.5;
+            const offset = robotNum === 1 ? 0 : 3;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(startPoint.x + offset, startPoint.y);
+            ctx.lineTo(endPoint.x + offset, endPoint.y);
+            ctx.stroke();
+            
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(endPoint.x + offset, endPoint.y);
+            ctx.lineTo(startPoint.x + offset, startPoint.y);
+            ctx.stroke();
+            
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(endPoint.x + offset, endPoint.y, 3, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        
+        function drawRobotTransitionPaths(sequence, color, robotNum) {
+            if (sequence.length < 2) return;
+            
+            const offset = robotNum === 1 ? 0 : 5;
+            
+            for (let i = 0; i < sequence.length - 1; i++) {
+                const currentWork = sequence[i];
+                const nextWork = sequence[i + 1];
+                
+                const currentPoint = getIntersectionPoint(currentWork.area, currentWork.lane);
+                const nextPoint = getIntersectionPoint(nextWork.area, nextWork.lane);
+                
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([8, 4]);
+                ctx.beginPath();
+                ctx.moveTo(currentPoint.x + offset, currentPoint.y);
+                ctx.lineTo(nextPoint.x + offset, nextPoint.y);
+                ctx.stroke();
+            }
+        }
+        
+        // 情報表示
+        function showMultiRobotPathInfo() {
+            if (!currentPaths.robot1 || !currentPaths.robot2) return;
+            
+            let pathDetails = '<div style="display: flex; gap: 20px;">';
+            
+            pathDetails += generateRobotPathInfo(currentPaths.robot1, robots.robot1, '1');
+            pathDetails += generateRobotPathInfo(currentPaths.robot2, robots.robot2, '2');
+            
+            pathDetails += '</div>';
+            
+            pathDetails += `
+                <p><strong>衝突回避:</strong> ロボットID優先方式（ロボット1が優先権、中央通路エリア＝通路侵入部も含む）</p>
+                <p><strong>凡例:</strong></p>
+                <ul>
+                    <li>🔴 赤: ロボット1の経路（優先権あり）</li>
+                    <li>🟢 緑: ロボット2の経路（中央通路エリア進入前待機）</li>
+                    <li>実線: 往路、破線: 復路、太破線: 通路間移動</li>
+                    <li>🟠 オレンジ点滅: 通路内待機状態</li>
+                </ul>
+                <p><strong>状態表示:</strong> 作業（通路内）、要求（中央通路エリア進入要求）、移動（中央通路エリア移動中）、通路待機（中央通路エリア進入前待機）</p>
+            `;
+            
+            document.getElementById('pathDetails').innerHTML = pathDetails;
+            document.getElementById('pathInfo').style.display = 'block';
+        }
+        
+        function generateRobotPathInfo(pathData, robot, robotNum) {
+            const sequence = pathData.workSequence;
+            let totalDistance = 0;
+            
+            sequence.forEach(work => {
+                totalDistance += LANE_LENGTH * 2 / scale;
+            });
+            
+            for (let i = 0; i < sequence.length - 1; i++) {
+                const currentWork = sequence[i];
+                const nextWork = sequence[i + 1];
+                const currentPoint = getIntersectionPoint(currentWork.area, currentWork.lane);
+                const nextPoint = getIntersectionPoint(nextWork.area, nextWork.lane);
+                
+                const transitionDistance = Math.sqrt(
+                    Math.pow(nextPoint.x - currentPoint.x, 2) + 
+                    Math.pow(nextPoint.y - currentPoint.y, 2)
+                ) / scale;
+                
+                totalDistance += transitionDistance;
+            }
+            
+            const directionText = pathData.direction === 'right' ? '時計回り' : '反時計回り';
+            const sequenceText = sequence.map((work, index) => 
+                `${index + 1}. エリア${work.area} 通路${work.lane}`
+            ).join('<br>');
+            
+            return `
+                <div style="flex: 1; border: 2px solid ${robot.color}; padding: 15px; border-radius: 8px;">
+                    <h4 style="color: ${robot.color};">🤖 ${robot.name}</h4>
+                    <p><strong>開始位置:</strong> エリア${pathData.startArea} 通路${pathData.startLane}</p>
+                    <p><strong>終了位置:</strong> エリア${pathData.endArea} 通路${pathData.endLane}</p>
+                    <p><strong>回転方向:</strong> ${directionText}</p>
+                    <p><strong>作業通路数:</strong> ${sequence.length}通路</p>
+                    <p><strong>総移動距離:</strong> ${totalDistance.toFixed(1)}m</p>
+                    <p><strong>作業順序:</strong><br>${sequenceText}</p>
+                </div>
+            `;
+        }
+        
+        // メモリリーク防止版のクリア処理
+        function clearPath() {
+            try {
+                // アニメーション停止
+                stopAnimation();
+                
+                // データクリア
+                currentPaths = { robot1: null, robot2: null };
+                
+                // ロボット状態リセット
+                Object.keys(robots).forEach(robotId => {
+                    const robot = robots[robotId];
+                    robot.animationPath = [];
+                    robot.currentStep = 0;
+                    robot.segmentProgress = 0;
+                    robot.state = 'idle';
+                    robot.waitCounter = 0;
+                    robot.x = 0;
+                    robot.y = 0;
+                    robot.angle = 0;
+                    robot.lastUpdateTime = 0;
+                });
+                
+                // UI更新
+                drawMap();
+                document.getElementById('pathInfo').style.display = 'none';
+                document.getElementById('animateBtn').disabled = true;
+                
+            } catch (error) {
+                console.error('クリア処理エラー:', error);
+            }
+        }
+        
+        // 初期化
+        drawMap();
+    </script>
+</body>
+</html>

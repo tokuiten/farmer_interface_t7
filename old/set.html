@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ロボット設定</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .robot-controls {
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #f8f9fa;
+        }
+        .robot-row {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            display: inline-block;
+            margin: 5px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        select, button {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        button:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        #animateBtn {
+            background-color: #3498db;
+        }
+        #animateBtn:hover:not(:disabled) {
+            background-color: #2980b9;
+        }
+        #stopBtn {
+            background-color: #e74c3c;
+        }
+        #stopBtn:hover:not(:disabled) {
+            background-color: #c0392b;
+        }
+        .control-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 style="font-size: 24px; margin-bottom: 20px;">🤖 ロボット設定</h2>
+        
+        <div class="controls">
+            <div class="robot-controls">
+                <h3>🤖 左向きロボ 設定</h3>
+                <div class="robot-row">
+                    <div class="control-group">
+                        <label for="startArea1">開始エリア:</label>
+                        <select id="startArea1">
+                            <option value="1">エリア1</option>
+                            <option value="2">エリア2</option>
+                            <option value="3">エリア3</option>
+                            <option value="4">エリア4</option>
+                            <option value="5">エリア5</option>
+                            <option value="6">エリア6</option>
+                            <option value="7">エリア7</option>
+                            <option value="8">エリア8</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="startLane1">開始通路:</label>
+                        <select id="startLane1">
+                            <option value="1">通路1</option>
+                            <option value="2">通路2</option>
+                            <option value="3">通路3</option>
+                            <option value="4">通路4</option>
+                            <option value="5">通路5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="endArea1">終了エリア:</label>
+                        <select id="endArea1">
+                            <option value="1">エリア1</option>
+                            <option value="2">エリア2</option>
+                            <option value="3">エリア3</option>
+                            <option value="4">エリア4</option>
+                            <option value="5">エリア5</option>
+                            <option value="6">エリア6</option>
+                            <option value="7">エリア7</option>
+                            <option value="8">エリア8</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="endLane1">終了通路:</label>
+                        <select id="endLane1">
+                            <option value="1">通路1</option>
+                            <option value="2">通路2</option>
+                            <option value="3">通路3</option>
+                            <option value="4">通路4</option>
+                            <option value="5">通路5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="direction1">回転方向:</label>
+                        <select id="direction1">
+                            <option value="right">時計回り</option>
+                            <option value="left">反時計回り</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="robot-controls">
+                <h3>🤖 右向きロボ 設定</h3>
+                <div class="robot-row">
+                    <div class="control-group">
+                        <label for="startArea2">開始エリア:</label>
+                        <select id="startArea2">
+                            <option value="1">エリア1</option>
+                            <option value="2">エリア2</option>
+                            <option value="3">エリア3</option>
+                            <option value="4">エリア4</option>
+                            <option value="5" selected>エリア5</option>
+                            <option value="6">エリア6</option>
+                            <option value="7">エリア7</option>
+                            <option value="8">エリア8</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="startLane2">開始通路:</label>
+                        <select id="startLane2">
+                            <option value="1">通路1</option>
+                            <option value="2">通路2</option>
+                            <option value="3">通路3</option>
+                            <option value="4">通路4</option>
+                            <option value="5">通路5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="endArea2">終了エリア:</label>
+                        <select id="endArea2">
+                            <option value="1">エリア1</option>
+                            <option value="2">エリア2</option>
+                            <option value="3">エリア3</option>
+                            <option value="4">エリア4</option>
+                            <option value="5">エリア5</option>
+                            <option value="6">エリア6</option>
+                            <option value="7">エリア7</option>
+                            <option value="8" selected>エリア8</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="endLane2">終了通路:</label>
+                        <select id="endLane2">
+                            <option value="1">通路1</option>
+                            <option value="2">通路2</option>
+                            <option value="3">通路3</option>
+                            <option value="4">通路4</option>
+                            <option value="5" selected>通路5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="direction2">回転方向:</label>
+                        <select id="direction2">
+                            <option value="right">時計回り</option>
+                            <option value="left" selected>反時計回り</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-buttons">
+                <button onclick="calculatePaths()">経路計算（2台）</button>
+                <button onclick="clearPath()">クリア</button>
+                <button onclick="startAnimation()" id="animateBtn" disabled>🤖 アニメーション開始</button>
+                <button onclick="stopAnimation()" id="stopBtn" disabled>⏹ 停止</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ロボット設定の基本関数
+        function calculatePaths() {
+            console.log('経路計算を実行');
+            // ここで実際の経路計算処理を呼び出す
+        }
+
+        function clearPath() {
+            console.log('経路をクリア');
+            document.getElementById('animateBtn').disabled = true;
+        }
+
+        function startAnimation() {
+            console.log('アニメーション開始');
+            document.getElementById('animateBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+        }
+
+        function stopAnimation() {
+            console.log('アニメーション停止');
+            document.getElementById('animateBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
+    </script>
+</body>
+</html>
