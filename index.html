@@ -298,22 +298,24 @@
         <div class="settings-panel">
             
             <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="display: inline-block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #FF6B6B;"></span>
-                        <span style="font-size: 20px;"><strong>T7L</strong>: 左向き収穫ロボ</span>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #e8f5e9; border-radius: 6px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="display: inline-block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #FF6B6B;"></span>
+                            <span style="font-size: 20px;"><strong>T7L</strong>: 左向き収穫ロボ</span>
+                        </div>
+                        <div id="robot1Status" style="background: rgba(165, 214, 167, 0.3); padding: 4px 12px; border-radius: 6px; font-size: 20px;">
+                            <span id="robot1State">充電中</span>
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="display: inline-block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #4A90E2;"></span>
-                        <span style="font-size: 20px;"><strong>T7R</strong>: 右向き収穫ロボ</span>
-                    </div>
-                </div>
-                <div style="display: flex; justify-content: space-around; align-items: center; font-size: 20px;">
-                    <div id="robot1Status" style="background: rgba(129, 199, 132, 0.15); padding: 4px 8px; border-radius: 6px;">
-                        <span id="robot1State">充電中</span>
-                    </div>
-                    <div id="robot2Status" style="background: rgba(129, 199, 132, 0.15); padding: 4px 8px; border-radius: 6px;">
-                        <span id="robot2State">待機中</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #e8f5e9; border-radius: 6px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="display: inline-block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #4A90E2;"></span>
+                            <span style="font-size: 20px;"><strong>T7R</strong>: 右向き収穫ロボ</span>
+                        </div>
+                        <div id="robot2Status" style="background: rgba(165, 214, 167, 0.3); padding: 4px 12px; border-radius: 6px; font-size: 20px;">
+                            <span id="robot2State">待機中</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -509,8 +511,26 @@
             const statusElement = document.getElementById(`robot${robotId}State`);
             const statusItem = document.getElementById(`robot${robotId}Status`);
             
-            // アイコンを削除してシンプルなテキストのみ
-            statusElement.textContent = status;
+            // 状態に応じたアイコンを設定
+            let icon = '';
+            switch(status) {
+                case '充電中':
+                    icon = '🔋 ';
+                    break;
+                case '待機中':
+                    icon = '⏸️ ';
+                    break;
+                case '稼働中':
+                    icon = '🚜 ';
+                    break;
+                case '通信不可':
+                    icon = '📵 ';
+                    break;
+                default:
+                    icon = '';
+            }
+            
+            statusElement.textContent = icon + status;
         }
         
         // 初期状態を設定
