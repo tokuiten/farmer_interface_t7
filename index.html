@@ -379,7 +379,7 @@
                                 <option value="2">エリア2</option>
                                 <option value="3">エリア3</option>
                                 <option value="4">エリア4</option>
-                                <option value="5">エリア5</option>
+                                <option value="5" selected>エリア5</option>
                                 <option value="6">エリア6</option>
                                 <option value="7">エリア7</option>
                                 <option value="8">エリア8</option>
@@ -389,7 +389,7 @@
                         <div class="control-group">
                             <label for="endLane1">終了通路:</label>
                             <select id="endLane1" disabled>
-                                <option value="1">通路1</option>
+                                <option value="1" selected>通路1</option>
                                 <option value="2">通路2</option>
                                 <option value="3">通路3</option>
                                 <option value="4">通路4</option>
@@ -438,25 +438,25 @@
                         <div class="control-group">
                             <label for="endArea2">終了エリア:</label>
                             <select id="endArea2" disabled>
-                                <option value="1">エリア1</option>
+                                <option value="1" selected>エリア1</option>
                                 <option value="2">エリア2</option>
                                 <option value="3">エリア3</option>
                                 <option value="4">エリア4</option>
                                 <option value="5">エリア5</option>
                                 <option value="6">エリア6</option>
                                 <option value="7">エリア7</option>
-                                <option value="8" selected>エリア8</option>
+                                <option value="8">エリア8</option>
                             </select>
                         </div>
                         
                         <div class="control-group">
                             <label for="endLane2">終了通路:</label>
                             <select id="endLane2" disabled>
-                                <option value="1">通路1</option>
+                                <option value="1" selected>通路1</option>
                                 <option value="2">通路2</option>
                                 <option value="3">通路3</option>
                                 <option value="4">通路4</option>
-                                <option value="5" selected>通路5</option>
+                                <option value="5">通路5</option>
                             </select>
                         </div>
                         
@@ -477,7 +477,9 @@
             <div class="quick-controls">
                 <div class="control-buttons">
                     <button onclick="calculatePaths()" style="background-color: #66bb6a; font-size: 20px; padding: 12px 24px;">経路確認</button>
-                    <button onclick="clearPath()" style="background-color: #a5d6a7; font-size: 20px; padding: 12px 24px;">クリア</button>
+                    <button id="animateBtn" onclick="startAnimation()" disabled style="background-color: #81c784; font-size: 20px; padding: 12px 24px;">開始</button>
+                    <button id="stopBtn" onclick="stopAnimation()" disabled style="background-color: #a5d6a7; font-size: 20px; padding: 12px 24px;">停止</button>
+                    <button onclick="clearPath()" style="background-color: #e0e0e0; font-size: 20px; padding: 12px 24px;">クリア</button>
                 </div>
             </div>
         </div>
@@ -546,27 +548,302 @@
             // updateRobotStatus(2, randomState2);
         }, 5000); // 5秒ごとに更新（デモ用、実際はコメントアウト）
 
+        // アニメーション制御用変数
+        let animationId = null;
+        let animationSpeed = 2; // ピクセル/フレーム
+
+        // ロボットの移動経路を計算
+        function calculateRobotPath(robotId) {
+            const startAreaId = `startArea${robotId}`;
+            const endAreaId = `endArea${robotId}`;
+            const startLaneId = `startLane${robotId}`;
+            const endLaneId = `endLane${robotId}`;
+            const directionId = `direction${robotId}`;
+            
+            const startArea = parseInt(document.getElementById(startAreaId).value);
+            const endArea = parseInt(document.getElementById(endAreaId).value);
+            const startLane = parseInt(document.getElementById(startLaneId).value);
+            const endLane = parseInt(document.getElementById(endLaneId).value);
+            const direction = document.getElementById(directionId).value;
+            
+            // 経路上のエリアを計算
+            const sequence = areaSequences[direction];
+            const startIndex = sequence.indexOf(startArea);
+            const endIndex = sequence.indexOf(endArea);
+            
+            let pathAreas = [];
+            if (startIndex <= endIndex) {
+                pathAreas = sequence.slice(startIndex, endIndex + 1);
+            } else {
+                pathAreas = sequence.slice(startIndex).concat(sequence.slice(0, endIndex + 1));
+            }
+            
+            return {
+                areas: pathAreas,
+                startLane,
+                endLane,
+                direction
+            };
+        }
+
+        // ロボットを移動させる
+        function moveRobot(robotId, targetX, targetY, targetAngle = 0) {
+            const robot = robotPositions[`robot${robotId}`];
+            const dx = targetX - robot.x;
+            const dy = targetY - robot.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > animationSpeed) {
+                // 目標に向かって移動
+                robot.x += (dx / distance) * animationSpeed;
+                robot.y += (dy / distance) * animationSpeed;
+                robot.angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                return false; // まだ到着していない
+            } else {
+                // 目標に到着
+                robot.x = targetX;
+                robot.y = targetY;
+                robot.angle = targetAngle;
+                return true; // 到着
+            }
+        }
+
+        // 終了条件をチェック
+        function checkEndCondition(robotId, currentArea, currentLane, path) {
+            return currentArea === path.endArea && currentLane === path.endLane;
+        }
+
+        // ロボットの状態を更新
+        function updateRobotMovement(robotId) {
+            const state = robotStates[`robot${robotId}`];
+            if (!state.isMoving || state.pathComplete) return;
+            
+            const path = calculateRobotPath(robotId);
+            const startLaneX = getStartLaneX(robotId);
+            
+            // 開始地点の横座標に到達するまで直進
+            if (!state.hasReachedStart) {
+                const targetY = mapConstants.centralPathCenterY;
+                const arrived = moveRobot(robotId, startLaneX, targetY);
+                
+                if (arrived) {
+                    state.hasReachedStart = true;
+                    state.currentAreaIndex = 0;
+                    state.currentArea = path.areas[0];
+                    // 現在のエリアで入れる通路をすべて取得
+                    const laneSequence = getLaneSequence(state.currentArea, path.direction);
+                    state.availableLanes = laneSequence.filter(lane => canEnterLane(robotId, state.currentArea, lane));
+                    state.currentLaneIndex = 0;
+                }
+                return;
+            }
+            
+            if (!state.isInLane && !state.isMovingToNextArea) {
+                // 現在のエリアで次の通路をチェック
+                if (state.currentLaneIndex < state.availableLanes.length) {
+                    const nextLane = state.availableLanes[state.currentLaneIndex];
+                    const laneEntrance = getLaneEntrance(state.currentArea, nextLane);
+                    
+                    // 通路入り口に移動
+                    const arrived = moveRobot(robotId, laneEntrance.x, laneEntrance.y);
+                    if (arrived) {
+                        state.isInLane = true;
+                        state.currentLane = nextLane;
+                        state.laneProgress = 0;
+                    }
+                } else {
+                    // 現在のエリアの全通路完了、次のエリアへ
+                    state.currentAreaIndex++;
+                    
+                    // 終了エリアを超えた場合は完了
+                    if (state.currentAreaIndex >= path.areas.length) {
+                        state.pathComplete = true;
+                        state.isMoving = false;
+                        updateRobotStatus(robotId, '待機中');
+                        return;
+                    }
+                    
+                    // 次のエリアに移動開始
+                    state.isMovingToNextArea = true;
+                    state.currentArea = path.areas[state.currentAreaIndex];
+                }
+            } else if (state.isMovingToNextArea) {
+                // 中央通路経由で次のエリアに移動中
+                const areaCoords = getAreaCoordinates(state.currentArea);
+                const currentX = robotPositions[`robot${robotId}`].x;
+                
+                // エリアの左端と右端を計算
+                const areaLeftX = areaCoords.x;
+                const areaRightX = areaCoords.x + mapConstants.areaWidth;
+                
+                // 現在位置からエリアの端までの距離を計算
+                const distanceToLeft = Math.abs(currentX - areaLeftX);
+                const distanceToRight = Math.abs(currentX - areaRightX);
+                
+                // 近い方の端を目標にする
+                const targetX = distanceToLeft < distanceToRight ? areaLeftX : areaRightX;
+                const targetY = mapConstants.centralPathCenterY;
+                
+                const arrived = moveRobot(robotId, targetX, targetY);
+                if (arrived) {
+                    // 新しいエリアの端に到着
+                    state.isMovingToNextArea = false;
+                    // 新しいエリアで入れる通路をすべて取得
+                    const laneSequence = getLaneSequence(state.currentArea, path.direction);
+                    state.availableLanes = laneSequence.filter(lane => canEnterLane(robotId, state.currentArea, lane));
+                    state.currentLaneIndex = 0;
+                }
+            } else {
+                // 通路内を移動中
+                const laneEntrance = getLaneEntrance(state.currentArea, state.currentLane);
+                const laneEnd = getLaneEnd(state.currentArea, state.currentLane);
+                
+                if (state.laneProgress === 0) {
+                    // 通路奥に向かって移動
+                    const arrived = moveRobot(robotId, laneEnd.x, laneEnd.y);
+                    if (arrived) {
+                        state.laneProgress = 1;
+                    }
+                } else {
+                    // 中央通路に戻る
+                    const arrived = moveRobot(robotId, laneEntrance.x, laneEntrance.y);
+                    if (arrived) {
+                        // 終了条件をチェック
+                        if (checkEndCondition(robotId, state.currentArea, state.currentLane, path)) {
+                            // 終了エリア・終了通路での作業完了
+                            state.pathComplete = true;
+                            state.isMoving = false;
+                            updateRobotStatus(robotId, '待機中');
+                            return;
+                        }
+                        
+                        state.isInLane = false;
+                        state.currentLaneIndex++;
+                        state.laneProgress = 0;
+                    }
+                }
+            }
+        }
+
+        // アニメーションループ
+        function animateRobots() {
+            updateRobotMovement(1);
+            updateRobotMovement(2);
+            drawFarm();
+            
+            // 両方のロボットが完了していない場合は続行
+            if (robotStates.robot1.isMoving || robotStates.robot2.isMoving) {
+                animationId = requestAnimationFrame(animateRobots);
+            } else {
+                // アニメーション終了
+                document.getElementById('animateBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                animationId = null;
+            }
+        }
+
         // ロボット設定の基本関数
         function calculatePaths() {
             console.log('経路計算を実行');
+            
+            // 両ロボットの経路を計算してコンソールに表示
+            const path1 = calculateRobotPath(1);
+            const path2 = calculateRobotPath(2);
+            
+            console.log('T7L経路:', path1);
+            console.log('T7R経路:', path2);
+            
             document.getElementById('animateBtn').disabled = false;
         }
 
         function clearPath() {
             console.log('経路をクリア');
+            
+            // アニメーション停止
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            // ロボット状態リセット
+            robotStates.robot1.isMoving = false;
+            robotStates.robot1.hasReachedStart = false;
+            robotStates.robot1.pathComplete = false;
+            robotStates.robot1.currentAreaIndex = 0;
+            robotStates.robot1.currentLaneIndex = 0;
+            robotStates.robot1.isInLane = false;
+            robotStates.robot1.isMovingToNextArea = false;
+            robotStates.robot1.availableLanes = [];
+            
+            robotStates.robot2.isMoving = false;
+            robotStates.robot2.hasReachedStart = false;
+            robotStates.robot2.pathComplete = false;
+            robotStates.robot2.currentAreaIndex = 0;
+            robotStates.robot2.currentLaneIndex = 0;
+            robotStates.robot2.isInLane = false;
+            robotStates.robot2.isMovingToNextArea = false;
+            robotStates.robot2.availableLanes = [];
+            
+            // ロボット位置リセット（充電ステーションに戻す）
+            robotPositions.robot1 = { x: leftMargin - 40, y: topBottomMargin + farmHeight / 2 - 10, angle: 0 };
+            robotPositions.robot2 = { x: leftMargin - 20, y: topBottomMargin + farmHeight / 2 + 10, angle: 0 };
+            
+            // ロボット状態更新
+            updateRobotStatus(1, '充電中');
+            updateRobotStatus(2, '待機中');
+            
             document.getElementById('animateBtn').disabled = true;
-            // キャンバスを再描画
+            document.getElementById('stopBtn').disabled = true;
+            
             drawFarm();
         }
 
         function startAnimation() {
             console.log('アニメーション開始');
+            
+            // ロボット状態初期化
+            robotStates.robot1.isMoving = true;
+            robotStates.robot1.hasReachedStart = false;
+            robotStates.robot1.pathComplete = false;
+            robotStates.robot1.currentAreaIndex = 0;
+            robotStates.robot1.currentLaneIndex = 0;
+            robotStates.robot1.isInLane = false;
+            robotStates.robot1.isMovingToNextArea = false;
+            robotStates.robot1.availableLanes = [];
+            updateRobotStatus(1, '稼働中');
+            
+            robotStates.robot2.isMoving = true;
+            robotStates.robot2.hasReachedStart = false;
+            robotStates.robot2.pathComplete = false;
+            robotStates.robot2.currentAreaIndex = 0;
+            robotStates.robot2.currentLaneIndex = 0;
+            robotStates.robot2.isInLane = false;
+            robotStates.robot2.isMovingToNextArea = false;
+            robotStates.robot2.availableLanes = [];
+            updateRobotStatus(2, '稼働中');
+            
             document.getElementById('animateBtn').disabled = true;
             document.getElementById('stopBtn').disabled = false;
+            
+            // アニメーション開始
+            animationId = requestAnimationFrame(animateRobots);
         }
 
         function stopAnimation() {
             console.log('アニメーション停止');
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            // ロボット状態リセット
+            robotStates.robot1.isMoving = false;
+            robotStates.robot2.isMoving = false;
+            
+            updateRobotStatus(1, '待機中');
+            updateRobotStatus(2, '待機中');
+            
             document.getElementById('animateBtn').disabled = false;
             document.getElementById('stopBtn').disabled = true;
         }
@@ -597,18 +874,18 @@
             
             if (selectedPreset === 'two-robots') {
                 // 2台で全面収穫（デフォルト設定）
-                // T7L: エリア1から4を担当
+                // T7L: エリア1から5を担当、エリア5の通路1で終了
                 document.getElementById('startArea1').value = '1';
                 document.getElementById('startLane1').value = '1';
-                document.getElementById('endArea1').value = '4';
-                document.getElementById('endLane1').value = '5';
+                document.getElementById('endArea1').value = '5';
+                document.getElementById('endLane1').value = '1';
                 document.getElementById('direction1').value = 'right';
                 
-                // T7R: エリア5から8を担当
+                // T7R: エリア5から1を担当、エリア1の通路1で終了
                 document.getElementById('startArea2').value = '5';
                 document.getElementById('startLane2').value = '1';
-                document.getElementById('endArea2').value = '8';
-                document.getElementById('endLane2').value = '5';
+                document.getElementById('endArea2').value = '1';
+                document.getElementById('endLane2').value = '1';
                 document.getElementById('direction2').value = 'left';
             } else if (selectedPreset === 'right-robot-only') {
                 // T7Rで全面収穫
@@ -815,6 +1092,173 @@
             ctx.restore();
         }
         
+        // ロボットの移動状態管理
+        let robotStates = {
+            robot1: {
+                isMoving: false,
+                hasReachedStart: false,
+                currentArea: 0,
+                currentAreaIndex: 0,
+                currentLane: 0,
+                currentLaneIndex: 0,
+                isInLane: false,
+                isMovingToNextArea: false,
+                direction: 'right',
+                pathComplete: false,
+                availableLanes: []
+            },
+            robot2: {
+                isMoving: false,
+                hasReachedStart: false,
+                currentArea: 0,
+                currentAreaIndex: 0,
+                currentLane: 0,
+                currentLaneIndex: 0,
+                isInLane: false,
+                isMovingToNextArea: false,
+                direction: 'left',
+                pathComplete: false,
+                availableLanes: []
+            }
+        };
+
+        // エリア巡回順序の定義
+        const areaSequences = {
+            right: [1, 2, 3, 4, 8, 7, 6, 5], // 時計回り
+            left: [5, 6, 7, 8, 4, 3, 2, 1]   // 反時計回り
+        };
+
+        // 座標計算用の定数
+        const mapConstants = {
+            leftMargin: 65,
+            topBottomMargin: 15,
+            areaWidth: 8 * scale,
+            centralPathY: topBottomMargin + (farmHeight - centralPathWidth) / 2,
+            centralPathCenterY: topBottomMargin + farmHeight / 2,
+            laneSpacing: (0.6 * scale + 1 * scale), // 畝幅 + 通路幅
+            laneStartOffset: 1 * scale // 最初の通路までのオフセット
+        };
+
+        // エリア座標を取得
+        function getAreaCoordinates(areaNumber) {
+            const row = areaNumber <= 4 ? 0 : 1;
+            const col = (areaNumber - 1) % 4;
+            const x = leftMargin + col * mapConstants.areaWidth;
+            let y;
+            
+            if (row === 0) {
+                // 北側エリア
+                y = topBottomMargin;
+            } else {
+                // 南側エリア
+                y = mapConstants.centralPathY + centralPathWidth;
+            }
+            
+            return { x, y, row, col };
+        }
+
+        // 通路座標を取得（中央通路からの入り口）- 畝と畝の間の中央
+        function getLaneEntrance(areaNumber, laneNumber) {
+            const areaCoords = getAreaCoordinates(areaNumber);
+            let laneX;
+            
+            if (laneNumber === 1) {
+                // 通路1: エリア左端から最初の畝の右端まで中央
+                laneX = areaCoords.x + mapConstants.laneStartOffset / 2;
+            } else if (laneNumber === 5) {
+                // 通路5: 最後の畝の左端からエリア右端まで中央
+                const lastRidgeEnd = areaCoords.x + mapConstants.laneStartOffset + 3 * mapConstants.laneSpacing + (0.6 * scale);
+                const areaEnd = areaCoords.x + mapConstants.areaWidth;
+                laneX = lastRidgeEnd + (areaEnd - lastRidgeEnd) / 2;
+            } else {
+                // 通路2-4: 畝と畝の間の中央
+                const prevRidgeEnd = areaCoords.x + mapConstants.laneStartOffset + (laneNumber - 2) * mapConstants.laneSpacing + (0.6 * scale);
+                const nextRidgeStart = areaCoords.x + mapConstants.laneStartOffset + (laneNumber - 1) * mapConstants.laneSpacing;
+                laneX = (prevRidgeEnd + nextRidgeStart) / 2;
+            }
+            
+            return {
+                x: laneX,
+                y: mapConstants.centralPathCenterY
+            };
+        }
+
+        // 通路内の終端座標を取得
+        function getLaneEnd(areaNumber, laneNumber) {
+            const laneEntrance = getLaneEntrance(areaNumber, laneNumber);
+            let endY;
+            
+            if (areaNumber <= 4) {
+                // 北側エリア - 上端
+                endY = topBottomMargin + pathWidth;
+            } else {
+                // 南側エリア - 下端
+                endY = topBottomMargin + farmHeight - pathWidth;
+            }
+            
+            return { x: laneEntrance.x, y: endY };
+        }
+
+        // ロボットが進入可能な通路かどうか判定（畝の位置基準）
+        function canEnterLane(robotId, areaNumber, laneNumber) {
+            const isT7L = robotId === 1;
+            
+            // 左側に畝があるかチェック（通路1の場合は左側に畝がない）
+            const hasLeftRidge = laneNumber > 1;
+            // 右側に畝があるかチェック（通路5の場合は右側に畝がない）
+            const hasRightRidge = laneNumber < 5;
+            
+            if (isT7L) {
+                // T7L: 通路の左側に畝がある場合に入れる
+                return hasLeftRidge;
+            } else {
+                // T7R: 通路の右側に畝がある場合に入れる
+                return hasRightRidge;
+            }
+        }
+
+        // エリア内での通路順序を取得
+        function getLaneSequence(areaNumber, direction) {
+            if (direction === 'right') {
+                // 時計回り
+                if (areaNumber <= 4) {
+                    return [1, 2, 3, 4, 5]; // エリア1-4: 通路1,2,3,4,5
+                } else {
+                    return [5, 4, 3, 2, 1]; // エリア5-8: 通路5,4,3,2,1
+                }
+            } else {
+                // 反時計回り（時計回りの逆順）
+                if (areaNumber <= 4) {
+                    return [5, 4, 3, 2, 1]; // エリア1-4: 通路5,4,3,2,1
+                } else {
+                    return [1, 2, 3, 4, 5]; // エリア5-8: 通路1,2,3,4,5
+                }
+            }
+        }
+
+        // 開始エリア・通路の横座標を取得
+        function getStartLaneX(robotId) {
+            const startAreaId = `startArea${robotId}`;
+            const startLaneId = `startLane${robotId}`;
+            
+            const startArea = parseInt(document.getElementById(startAreaId).value);
+            const startLane = parseInt(document.getElementById(startLaneId).value);
+            
+            const laneEntrance = getLaneEntrance(startArea, startLane);
+            return laneEntrance.x;
+        }
+
+        // 中央通路での移動方向を取得
+        function getCentralPathDirection(areaNumber, rotationDirection) {
+            if (rotationDirection === 'right') {
+                // 時計回り: エリア1-4で右、エリア5-8で左
+                return areaNumber <= 4 ? 'right' : 'left';
+            } else {
+                // 反時計回り: エリア5-8で右、エリア1-4で左  
+                return areaNumber >= 5 ? 'right' : 'left';
+            }
+        }
+
         // ロボットの位置を更新する関数
         function updateRobotPosition(robotId, x, y, angle = 0) {
             robotPositions[`robot${robotId}`] = { x, y, angle };
