@@ -474,6 +474,65 @@
                 </div>
             </div>
             
+            <div class="accordion-toggle" onclick="togglePreviewSettings()">
+                <strong style="font-size: 20px;">プレビュー設定</strong>
+                <span class="icon" id="previewIcon">▼</span>
+            </div>
+            
+            <div class="accordion-content" id="previewSettings">
+                <div class="controls">
+                    <div style="margin-bottom: 20px;">
+                        <label for="speedSlider" style="font-size: 18px;">移動速度 (全台共通):</label>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                            <span style="font-size: 16px;">遅い</span>
+                            <input type="range" id="speedSlider" min="0.5" max="5" value="2" step="0.5" style="flex: 1; height: 8px;">
+                            <span style="font-size: 16px;">速い</span>
+                            <span id="speedValue" style="font-size: 16px; font-weight: bold; min-width: 40px;">2.0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="robot-controls">
+                        <h3 style="font-size: 18px;"><span style="display: inline-block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #FF6B6B; margin-right: 8px; vertical-align: middle;"></span>T7L 開始ディレイ</h3>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                            <label for="delayT7L" style="font-size: 16px;">遅延時間:</label>
+                            <select id="delayT7L" style="font-size: 16px; padding: 4px 8px;">
+                                <option value="0">0.0秒</option>
+                                <option value="0.1">0.1秒</option>
+                                <option value="0.2">0.2秒</option>
+                                <option value="0.3">0.3秒</option>
+                                <option value="0.4">0.4秒</option>
+                                <option value="0.5">0.5秒</option>
+                                <option value="0.6">0.6秒</option>
+                                <option value="0.7">0.7秒</option>
+                                <option value="0.8">0.8秒</option>
+                                <option value="0.9">0.9秒</option>
+                                <option value="1.0">1.0秒</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="robot-controls">
+                        <h3 style="font-size: 18px;"><span style="display: inline-block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #4A90E2; margin-right: 8px; vertical-align: middle;"></span>T7R 開始ディレイ</h3>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                            <label for="delayT7R" style="font-size: 16px;">遅延時間:</label>
+                            <select id="delayT7R" style="font-size: 16px; padding: 4px 8px;">
+                                <option value="0">0.0秒</option>
+                                <option value="0.1">0.1秒</option>
+                                <option value="0.2">0.2秒</option>
+                                <option value="0.3">0.3秒</option>
+                                <option value="0.4">0.4秒</option>
+                                <option value="0.5" selected>0.5秒</option>
+                                <option value="0.6">0.6秒</option>
+                                <option value="0.7">0.7秒</option>
+                                <option value="0.8">0.8秒</option>
+                                <option value="0.9">0.9秒</option>
+                                <option value="1.0">1.0秒</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="quick-controls">
                 <div class="control-buttons">
                     <button onclick="calculatePaths()" style="background-color: #66bb6a; font-size: 20px; padding: 12px 24px;">経路確認</button>
@@ -551,6 +610,14 @@
         // アニメーション制御用変数
         let animationId = null;
         let animationSpeed = 2; // ピクセル/フレーム
+        let robotStartDelays = {
+            robot1: 0,    // T7L
+            robot2: 0.3   // T7R (デフォルト0.3秒遅延)
+        };
+        let delayTimeouts = {
+            robot1: null,
+            robot2: null
+        };
 
         // ロボットの移動経路を計算
         function calculateRobotPath(robotId) {
@@ -768,6 +835,16 @@
                 animationId = null;
             }
             
+            // ディレイタイマーをクリア
+            if (delayTimeouts.robot1) {
+                clearTimeout(delayTimeouts.robot1);
+                delayTimeouts.robot1 = null;
+            }
+            if (delayTimeouts.robot2) {
+                clearTimeout(delayTimeouts.robot2);
+                delayTimeouts.robot2 = null;
+            }
+            
             // ロボット状態リセット
             robotStates.robot1.isMoving = false;
             robotStates.robot1.hasReachedStart = false;
@@ -804,29 +881,40 @@
         function startAnimation() {
             console.log('アニメーション開始');
             
-            // ロボット状態初期化
-            robotStates.robot1.isMoving = true;
-            robotStates.robot1.hasReachedStart = false;
-            robotStates.robot1.pathComplete = false;
-            robotStates.robot1.currentAreaIndex = 0;
-            robotStates.robot1.currentLaneIndex = 0;
-            robotStates.robot1.isInLane = false;
-            robotStates.robot1.isMovingToNextArea = false;
-            robotStates.robot1.availableLanes = [];
-            updateRobotStatus(1, '稼働中');
-            
-            robotStates.robot2.isMoving = true;
-            robotStates.robot2.hasReachedStart = false;
-            robotStates.robot2.pathComplete = false;
-            robotStates.robot2.currentAreaIndex = 0;
-            robotStates.robot2.currentLaneIndex = 0;
-            robotStates.robot2.isInLane = false;
-            robotStates.robot2.isMovingToNextArea = false;
-            robotStates.robot2.availableLanes = [];
-            updateRobotStatus(2, '稼働中');
+            // 設定を更新
+            updateSpeedValue();
+            updateDelaySettings();
             
             document.getElementById('animateBtn').disabled = true;
             document.getElementById('stopBtn').disabled = false;
+            
+            // T7L（ロボット1）の開始
+            delayTimeouts.robot1 = setTimeout(() => {
+                robotStates.robot1.isMoving = true;
+                robotStates.robot1.hasReachedStart = false;
+                robotStates.robot1.pathComplete = false;
+                robotStates.robot1.currentAreaIndex = 0;
+                robotStates.robot1.currentLaneIndex = 0;
+                robotStates.robot1.isInLane = false;
+                robotStates.robot1.isMovingToNextArea = false;
+                robotStates.robot1.availableLanes = [];
+                updateRobotStatus(1, '稼働中');
+                delayTimeouts.robot1 = null;
+            }, robotStartDelays.robot1 * 1000);
+            
+            // T7R（ロボット2）の開始
+            delayTimeouts.robot2 = setTimeout(() => {
+                robotStates.robot2.isMoving = true;
+                robotStates.robot2.hasReachedStart = false;
+                robotStates.robot2.pathComplete = false;
+                robotStates.robot2.currentAreaIndex = 0;
+                robotStates.robot2.currentLaneIndex = 0;
+                robotStates.robot2.isInLane = false;
+                robotStates.robot2.isMovingToNextArea = false;
+                robotStates.robot2.availableLanes = [];
+                updateRobotStatus(2, '稼働中');
+                delayTimeouts.robot2 = null;
+            }, robotStartDelays.robot2 * 1000);
             
             // アニメーション開始
             animationId = requestAnimationFrame(animateRobots);
@@ -838,6 +926,16 @@
             if (animationId) {
                 cancelAnimationFrame(animationId);
                 animationId = null;
+            }
+            
+            // ディレイタイマーをクリア
+            if (delayTimeouts.robot1) {
+                clearTimeout(delayTimeouts.robot1);
+                delayTimeouts.robot1 = null;
+            }
+            if (delayTimeouts.robot2) {
+                clearTimeout(delayTimeouts.robot2);
+                delayTimeouts.robot2 = null;
             }
             
             // ロボット状態リセット
@@ -858,6 +956,44 @@
             
             toggle.classList.toggle('active');
             content.classList.toggle('active');
+        }
+
+        // プレビュー設定の開閉
+        function togglePreviewSettings() {
+            const toggles = document.querySelectorAll('.accordion-toggle');
+            const toggle = toggles[toggles.length - 1]; // 最後のアコーディオン
+            const content = document.getElementById('previewSettings');
+            const icon = document.getElementById('previewIcon');
+            
+            if (toggle && content && icon) {
+                toggle.classList.toggle('active');
+                content.classList.toggle('active');
+                
+                if (content.classList.contains('active')) {
+                    icon.textContent = '▲';
+                } else {
+                    icon.textContent = '▼';
+                }
+            }
+        }
+
+        // 速度スライダーの値更新
+        function updateSpeedValue() {
+            const slider = document.getElementById('speedSlider');
+            const speedValue = document.getElementById('speedValue');
+            const newSpeed = parseFloat(slider.value);
+            
+            speedValue.textContent = newSpeed.toFixed(1);
+            animationSpeed = newSpeed;
+        }
+
+        // ディレイ設定の更新
+        function updateDelaySettings() {
+            const delayT7L = parseFloat(document.getElementById('delayT7L').value);
+            const delayT7R = parseFloat(document.getElementById('delayT7R').value);
+            
+            robotStartDelays.robot1 = delayT7L;
+            robotStartDelays.robot2 = delayT7R;
         }
 
         // プリセット設定
@@ -1360,6 +1496,15 @@
             applyPreset();
             // 初期ボタン状態を設定
             updateButtonStates();
+            
+            // イベントリスナーを追加
+            document.getElementById('speedSlider').addEventListener('input', updateSpeedValue);
+            document.getElementById('delayT7L').addEventListener('change', updateDelaySettings);
+            document.getElementById('delayT7R').addEventListener('change', updateDelaySettings);
+            
+            // 初期値を設定
+            updateSpeedValue();
+            updateDelaySettings();
         });
     </script>
 </body>
