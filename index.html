@@ -587,23 +587,26 @@
         }
 
         // ロボットを移動させる
-        function moveRobot(robotId, targetX, targetY, targetAngle = 0) {
+        function moveRobot(robotId, targetX, targetY, targetAngle = null) {
             const robot = robotPositions[`robot${robotId}`];
             const dx = targetX - robot.x;
             const dy = targetY - robot.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
+            // ロボットの向きを固定（T7L=左向き、T7R=右向き）
+            const fixedAngle = robotId === 1 ? 180 : 0; // T7L: 180度（左）, T7R: 0度（右）
+            
             if (distance > animationSpeed) {
                 // 目標に向かって移動
                 robot.x += (dx / distance) * animationSpeed;
                 robot.y += (dy / distance) * animationSpeed;
-                robot.angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                robot.angle = fixedAngle; // 固定の向き
                 return false; // まだ到着していない
             } else {
                 // 目標に到着
                 robot.x = targetX;
                 robot.y = targetY;
-                robot.angle = targetAngle;
+                robot.angle = fixedAngle; // 固定の向き
                 return true; // 到着
             }
         }
@@ -785,8 +788,8 @@
             robotStates.robot2.availableLanes = [];
             
             // ロボット位置リセット（充電ステーションに戻す）
-            robotPositions.robot1 = { x: leftMargin - 40, y: topBottomMargin + farmHeight / 2 - 10, angle: 0 };
-            robotPositions.robot2 = { x: leftMargin - 20, y: topBottomMargin + farmHeight / 2 + 10, angle: 0 };
+            robotPositions.robot1 = { x: leftMargin - 40, y: topBottomMargin + farmHeight / 2 - 10, angle: 180 }; // T7L - 左向き固定
+            robotPositions.robot2 = { x: leftMargin - 20, y: topBottomMargin + farmHeight / 2 + 10, angle: 0 };   // T7R - 右向き固定
             
             // ロボット状態更新
             updateRobotStatus(1, '充電中');
@@ -951,8 +954,8 @@
         
         // ロボットの位置情報（充電ステーション内）
         let robotPositions = {
-            robot1: { x: leftMargin - 40, y: topBottomMargin + farmHeight / 2 - 10, angle: 0 }, // T7L - 充電ステーション内
-            robot2: { x: leftMargin - 20, y: topBottomMargin + farmHeight / 2 + 10, angle: 0 }  // T7R - 充電ステーション内
+            robot1: { x: leftMargin - 40, y: topBottomMargin + farmHeight / 2 - 10, angle: 180 }, // T7L - 左向き固定
+            robot2: { x: leftMargin - 20, y: topBottomMargin + farmHeight / 2 + 10, angle: 0 }   // T7R - 右向き固定
         };
         
         function drawFarm() {
