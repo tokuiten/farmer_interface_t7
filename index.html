@@ -474,6 +474,43 @@
                 </div>
             </div>
             
+            <div class="accordion-toggle" onclick="toggleLaneSettings()">
+                <strong style="font-size: 20px;">入る通路</strong>
+                <span class="icon" id="laneIcon">▼</span>
+            </div>
+            
+            <div class="accordion-content" id="laneSettings">
+                <div class="controls">
+                    <!-- T7L設定 -->
+                    <div class="robot-controls">
+                        <h3 style="font-size: 18px; cursor: pointer;" onclick="toggleRobotLanes('T7L')">
+                            <span style="display: inline-block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #FF6B6B; margin-right: 8px; vertical-align: middle;"></span>
+                            T7L 通路設定
+                            <span class="icon" id="t7lIcon" style="margin-left: 10px;">▼</span>
+                        </h3>
+                        <div class="accordion-content" id="t7lLanes">
+                            <div class="controls" style="padding: 10px 0;">
+                                <div id="t7lAreaControls"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- T7R設定 -->
+                    <div class="robot-controls">
+                        <h3 style="font-size: 18px; cursor: pointer;" onclick="toggleRobotLanes('T7R')">
+                            <span style="display: inline-block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #4A90E2; margin-right: 8px; vertical-align: middle;"></span>
+                            T7R 通路設定
+                            <span class="icon" id="t7rIcon" style="margin-left: 10px;">▼</span>
+                        </h3>
+                        <div class="accordion-content" id="t7rLanes">
+                            <div class="controls" style="padding: 10px 0;">
+                                <div id="t7rAreaControls"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="accordion-toggle" onclick="togglePreviewSettings()">
                 <strong style="font-size: 20px;">プレビュー設定</strong>
                 <span class="icon" id="previewIcon">▼</span>
@@ -519,9 +556,9 @@
                                 <option value="0">0.0秒</option>
                                 <option value="0.1">0.1秒</option>
                                 <option value="0.2">0.2秒</option>
-                                <option value="0.3">0.3秒</option>
+                                <option value="0.3" selected>0.3秒</option>
                                 <option value="0.4">0.4秒</option>
-                                <option value="0.5" selected>0.5秒</option>
+                                <option value="0.5">0.5秒</option>
                                 <option value="0.6">0.6秒</option>
                                 <option value="0.7">0.7秒</option>
                                 <option value="0.8">0.8秒</option>
@@ -996,6 +1033,146 @@
             robotStartDelays.robot2 = delayT7R;
         }
 
+        // 通路設定のアコーディオン制御
+        function toggleLaneSettings() {
+            const toggles = document.querySelectorAll('.accordion-toggle');
+            let toggle = null;
+            
+            // 「入る通路」のトグルを検索
+            toggles.forEach(t => {
+                if (t.textContent.includes('入る通路')) {
+                    toggle = t;
+                }
+            });
+            
+            const content = document.getElementById('laneSettings');
+            const icon = document.getElementById('laneIcon');
+            
+            if (toggle && content && icon) {
+                toggle.classList.toggle('active');
+                content.classList.toggle('active');
+                
+                if (content.classList.contains('active')) {
+                    icon.textContent = '▲';
+                } else {
+                    icon.textContent = '▼';
+                }
+            }
+        }
+
+        // ロボット別通路設定のアコーディオン制御
+        function toggleRobotLanes(robotName) {
+            const content = document.getElementById(robotName.toLowerCase() + 'Lanes');
+            const icon = document.getElementById(robotName.toLowerCase() + 'Icon');
+            
+            if (content && icon) {
+                content.classList.toggle('active');
+                
+                if (content.classList.contains('active')) {
+                    icon.textContent = '▲';
+                } else {
+                    icon.textContent = '▼';
+                }
+            }
+        }
+
+        // エリア別通路設定のアコーディオン制御
+        function toggleAreaLanes(robotName, areaNum) {
+            const content = document.getElementById(`${robotName.toLowerCase()}Area${areaNum}Lanes`);
+            const icon = document.getElementById(`${robotName.toLowerCase()}Area${areaNum}Icon`);
+            
+            if (content && icon) {
+                content.classList.toggle('active');
+                
+                if (content.classList.contains('active')) {
+                    icon.textContent = '▲';
+                } else {
+                    icon.textContent = '▼';
+                }
+            }
+        }
+
+        // 通路チェックボックス構造を動的生成
+        function createLaneCheckboxes() {
+            const robots = ['T7L', 'T7R'];
+            
+            robots.forEach(robotName => {
+                const container = document.getElementById(`${robotName.toLowerCase()}AreaControls`);
+                
+                for (let area = 1; area <= 8; area++) {
+                    // エリアの折りたたみ
+                    const areaDiv = document.createElement('div');
+                    areaDiv.className = 'robot-controls';
+                    areaDiv.style.marginBottom = '15px';
+                    
+                    // エリアヘッダー
+                    const areaHeader = document.createElement('h4');
+                    areaHeader.style.fontSize = '16px';
+                    areaHeader.style.cursor = 'pointer';
+                    areaHeader.style.padding = '8px 12px';
+                    areaHeader.style.backgroundColor = '#f5f5f5';
+                    areaHeader.style.borderRadius = '4px';
+                    areaHeader.style.margin = '0 0 8px 0';
+                    areaHeader.onclick = () => toggleAreaLanes(robotName, area);
+                    
+                    // エリアチェックボックス
+                    const areaCheckbox = document.createElement('input');
+                    areaCheckbox.type = 'checkbox';
+                    areaCheckbox.id = `${robotName.toLowerCase()}Area${area}Check`;
+                    areaCheckbox.checked = true;
+                    areaCheckbox.style.marginRight = '8px';
+                    
+                    areaHeader.appendChild(areaCheckbox);
+                    areaHeader.appendChild(document.createTextNode(`エリア${area}`));
+                    
+                    const areaIcon = document.createElement('span');
+                    areaIcon.className = 'icon';
+                    areaIcon.id = `${robotName.toLowerCase()}Area${area}Icon`;
+                    areaIcon.textContent = '▼';
+                    areaIcon.style.marginLeft = '10px';
+                    areaHeader.appendChild(areaIcon);
+                    
+                    // 通路設定コンテンツ
+                    const laneContent = document.createElement('div');
+                    laneContent.className = 'accordion-content';
+                    laneContent.id = `${robotName.toLowerCase()}Area${area}Lanes`;
+                    laneContent.style.padding = '10px';
+                    laneContent.style.backgroundColor = '#fafafa';
+                    laneContent.style.borderRadius = '4px';
+                    
+                    // 通路1-5のチェックボックス
+                    const laneGrid = document.createElement('div');
+                    laneGrid.style.display = 'grid';
+                    laneGrid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+                    laneGrid.style.gap = '10px';
+                    
+                    for (let lane = 1; lane <= 5; lane++) {
+                        const laneLabel = document.createElement('label');
+                        laneLabel.style.fontSize = '14px';
+                        laneLabel.style.display = 'flex';
+                        laneLabel.style.alignItems = 'center';
+                        laneLabel.style.gap = '4px';
+                        
+                        const laneCheckbox = document.createElement('input');
+                        laneCheckbox.type = 'checkbox';
+                        laneCheckbox.id = `${robotName.toLowerCase()}Area${area}Lane${lane}`;
+                        laneCheckbox.checked = true;
+                        
+                        laneLabel.appendChild(laneCheckbox);
+                        laneLabel.appendChild(document.createTextNode(`通路${lane}`));
+                        
+                        laneGrid.appendChild(laneLabel);
+                    }
+                    
+                    laneContent.appendChild(laneGrid);
+                    
+                    areaDiv.appendChild(areaHeader);
+                    areaDiv.appendChild(laneContent);
+                    container.appendChild(areaDiv);
+                }
+            });
+        }
+
         // プリセット設定
         function applyPreset() {
             const presetSelect = document.getElementById('presetSelect');
@@ -1338,10 +1515,26 @@
             return { x: laneEntrance.x, y: endY };
         }
 
-        // ロボットが進入可能な通路かどうか判定（畝の位置基準）
+        // ロボットが進入可能な通路かどうか判定（畝の位置基準 + チェックボックス）
         function canEnterLane(robotId, areaNumber, laneNumber) {
             const isT7L = robotId === 1;
+            const robotName = isT7L ? 'T7L' : 'T7R';
             
+            // チェックボックスの状態を確認
+            const areaCheckbox = document.getElementById(`${robotName.toLowerCase()}Area${areaNumber}Check`);
+            const laneCheckbox = document.getElementById(`${robotName.toLowerCase()}Area${areaNumber}Lane${laneNumber}`);
+            
+            // エリアのチェックボックスがfalseの場合、そのエリアでは通路に入らない
+            if (areaCheckbox && !areaCheckbox.checked) {
+                return false;
+            }
+            
+            // 通路のチェックボックスがfalseの場合、その通路には入らない
+            if (laneCheckbox && !laneCheckbox.checked) {
+                return false;
+            }
+            
+            // 物理的な制約チェック（畝の位置基準）
             // 左側に畝があるかチェック（通路1の場合は左側に畝がない）
             const hasLeftRidge = laneNumber > 1;
             // 右側に畝があるかチェック（通路5の場合は右側に畝がない）
@@ -1496,6 +1689,9 @@
             applyPreset();
             // 初期ボタン状態を設定
             updateButtonStates();
+            
+            // チェックボックス構造を生成
+            createLaneCheckboxes();
             
             // イベントリスナーを追加
             document.getElementById('speedSlider').addEventListener('input', updateSpeedValue);
