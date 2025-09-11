@@ -297,6 +297,12 @@
     <div class="main-container">
         <div class="settings-panel">
             
+            <div style="text-align: center; margin-bottom: 15px;">
+                <button onclick="showManual()" style="background-color: #81c784; color: white; font-size: 18px; padding: 10px 25px; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: inline-block;">
+                    📖 マニュアルを読む
+                </button>
+            </div>
+            
             <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                 <div style="display: flex; flex-direction: column; gap: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #e8f5e9; border-radius: 6px;">
@@ -325,10 +331,13 @@
                 <div style="display: flex; align-items: center; gap: 15px; justify-content: center; margin-top: 10px;">
                     <select id="presetSelect">
                         <option value="two-robots">2台で全面収穫</option>
+                        <option value="left-robot-only">T7Lで全面収穫</option>
                         <option value="right-robot-only">T7Rで全面収穫</option>
-                        <option value="custom">カスタム設定</option>
+                        <option value="custom1">カスタム収穫1</option>
+                        <option value="custom2">カスタム収穫2</option>
                     </select>
-                    <button onclick="applyPreset()" style="background-color: #66bb6a; color: white; font-size: 20px; padding: 10px 20px;">確定</button>
+                    <button onclick="calculatePaths()" style="background-color: #66bb6a; color: white; font-size: 20px; padding: 10px 20px;">経路確認</button>
+                    <button onclick="clearPath()" style="background-color: #81c784; color: white; font-size: 20px; padding: 10px 20px;">クリア</button>
                 </div>
             </div>
             
@@ -379,7 +388,7 @@
                                 <option value="2">エリア2</option>
                                 <option value="3">エリア3</option>
                                 <option value="4">エリア4</option>
-                                <option value="5">エリア5</option>
+                                <option value="5" selected>エリア5</option>
                                 <option value="6">エリア6</option>
                                 <option value="7">エリア7</option>
                                 <option value="8">エリア8</option>
@@ -389,7 +398,7 @@
                         <div class="control-group">
                             <label for="endLane1">終了通路:</label>
                             <select id="endLane1" disabled>
-                                <option value="1">通路1</option>
+                                <option value="1" selected>通路1</option>
                                 <option value="2">通路2</option>
                                 <option value="3">通路3</option>
                                 <option value="4">通路4</option>
@@ -404,6 +413,20 @@
                                 <option value="left">反時計回り</option>
                             </select>
                         </div>
+                        
+                        <div class="control-group">
+                            <label for="harvest1">収穫量(kg):</label>
+                            <input type="text" id="harvest1" value="40" disabled 
+                                   style="width: 80px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 20px;"
+                                   pattern="[0-9]+(\.[0-9]+)?" inputmode="decimal">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="ripeness1">完熟度(%):</label>
+                            <input type="text" id="ripeness1" value="95" disabled 
+                                   style="width: 60px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 20px;"
+                                   pattern="[0-9]+(\.[0-9]+)?" inputmode="decimal">
+                        </div>
                     </div>
                 </div>
 
@@ -417,10 +440,10 @@
                                 <option value="2">エリア2</option>
                                 <option value="3">エリア3</option>
                                 <option value="4">エリア4</option>
-                                <option value="5" selected>エリア5</option>
+                                <option value="5">エリア5</option>
                                 <option value="6">エリア6</option>
                                 <option value="7">エリア7</option>
-                                <option value="8">エリア8</option>
+                                <option value="8" selected>エリア8</option>
                             </select>
                         </div>
                         
@@ -431,7 +454,7 @@
                                 <option value="2">通路2</option>
                                 <option value="3">通路3</option>
                                 <option value="4">通路4</option>
-                                <option value="5">通路5</option>
+                                <option value="5" selected>通路5</option>
                             </select>
                         </div>
                         
@@ -441,11 +464,11 @@
                                 <option value="1">エリア1</option>
                                 <option value="2">エリア2</option>
                                 <option value="3">エリア3</option>
-                                <option value="4">エリア4</option>
+                                <option value="4" selected>エリア4</option>
                                 <option value="5">エリア5</option>
                                 <option value="6">エリア6</option>
                                 <option value="7">エリア7</option>
-                                <option value="8" selected>エリア8</option>
+                                <option value="8">エリア8</option>
                             </select>
                         </div>
                         
@@ -467,6 +490,20 @@
                                 <option value="left" selected>反時計回り</option>
                             </select>
                         </div>
+                        
+                        <div class="control-group">
+                            <label for="harvest2">収穫量(kg):</label>
+                            <input type="text" id="harvest2" value="40" disabled 
+                                   style="width: 80px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 20px;"
+                                   pattern="[0-9]+(\.[0-9]+)?" inputmode="decimal">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="ripeness2">完熟度(%):</label>
+                            <input type="text" id="ripeness2" value="95" disabled 
+                                   style="width: 60px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 20px;"
+                                   pattern="[0-9]+(\.[0-9]+)?" inputmode="decimal">
+                        </div>
                     </div>
                 </div>
 
@@ -476,8 +513,80 @@
             
             <div class="quick-controls">
                 <div class="control-buttons">
-                    <button onclick="calculatePaths()" style="background-color: #66bb6a; font-size: 20px; padding: 12px 24px;">経路確認</button>
-                    <button onclick="clearPath()" style="background-color: #a5d6a7; font-size: 20px; padding: 12px 24px;">クリア</button>
+                    <button onclick="applyPreset()" style="background-color: #66bb6a; font-size: 20px; padding: 12px 24px;">確定</button>
+                </div>
+            </div>
+            
+            <div class="accordion-toggle" onclick="toggleLogAccordion()" style="margin-top: 20px;">
+                <strong style="font-size: 20px;">過去の収穫記録</strong>
+                <span class="icon" id="logIcon">▼</span>
+            </div>
+            
+            <div class="accordion-content" id="logContent">
+                <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-height: 400px; overflow-y: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 16px;">
+                        <thead>
+                            <tr style="background: #e8f5e9; border-bottom: 2px solid #81c784;">
+                                <th style="padding: 10px; text-align: left;">収穫日</th>
+                                <th style="padding: 10px; text-align: left;">開始時刻</th>
+                                <th style="padding: 10px; text-align: left;">終了時刻</th>
+                                <th style="padding: 10px; text-align: right;">実際の収穫量(kg)</th>
+                                <th style="padding: 10px; text-align: center;">詳細</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody">
+                            <!-- サンプルデータ -->
+                            <tr style="border-bottom: 1px solid #e0e0e0;">
+                                <td style="padding: 10px;">2024/12/20</td>
+                                <td style="padding: 10px;">08:30</td>
+                                <td style="padding: 10px;">11:45</td>
+                                <td style="padding: 10px; text-align: right;">85.5</td>
+                                <td style="padding: 10px; text-align: center;">
+                                    <button onclick="showLogDetail(1)" style="background-color: #a5d6a7; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">詳細</button>
+                                </td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e0e0e0;">
+                                <td style="padding: 10px;">2024/12/19</td>
+                                <td style="padding: 10px;">09:00</td>
+                                <td style="padding: 10px;">12:30</td>
+                                <td style="padding: 10px; text-align: right;">92.3</td>
+                                <td style="padding: 10px; text-align: center;">
+                                    <button onclick="showLogDetail(2)" style="background-color: #a5d6a7; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">詳細</button>
+                                </td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e0e0e0;">
+                                <td style="padding: 10px;">2024/12/18</td>
+                                <td style="padding: 10px;">08:00</td>
+                                <td style="padding: 10px;">10:45</td>
+                                <td style="padding: 10px; text-align: right;">78.8</td>
+                                <td style="padding: 10px; text-align: center;">
+                                    <button onclick="showLogDetail(3)" style="background-color: #a5d6a7; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">詳細</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 詳細モーダル -->
+            <div id="logDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 80%; overflow-y: auto;">
+                    <h3 style="margin-bottom: 20px; color: #4caf50;">収穫詳細情報</h3>
+                    <div id="logDetailContent"></div>
+                    <button onclick="closeLogDetail()" style="margin-top: 20px; background-color: #81c784; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">閉じる</button>
+                </div>
+            </div>
+            
+            <!-- マニュアルモーダル -->
+            <div id="manualModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1001;">
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 40px; border-radius: 15px; max-width: 800px; width: 90%; max-height: 85%; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.3);">
+                    <h2 style="margin-bottom: 30px; color: #4caf50; text-align: center; border-bottom: 3px solid #4caf50; padding-bottom: 15px;">収穫ロボット管理システム マニュアル</h2>
+                    
+                    <div id="manualContent">
+                        <!-- マニュアル内容は manual.html から読み込まれます -->
+                    </div>
+                    
+                    <button onclick="closeManual()" style="margin-top: 30px; background-color: #4caf50; color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; display: block; margin-left: auto; margin-right: auto;">閉じる</button>
                 </div>
             </div>
         </div>
@@ -579,6 +688,239 @@
             toggle.classList.toggle('active');
             content.classList.toggle('active');
         }
+        
+        // ログアコーディオンの開閉
+        function toggleLogAccordion() {
+            const toggle = event.currentTarget;
+            const content = document.getElementById('logContent');
+            const icon = document.getElementById('logIcon');
+            
+            toggle.classList.toggle('active');
+            content.classList.toggle('active');
+            
+            // アイコンの回転
+            if (content.classList.contains('active')) {
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        // ログ詳細表示
+        function showLogDetail(logId) {
+            const modal = document.getElementById('logDetailModal');
+            const content = document.getElementById('logDetailContent');
+            
+            // サンプル詳細データ
+            const logDetails = {
+                1: {
+                    date: '2024/12/20',
+                    startTime: '08:30',
+                    endTime: '11:45',
+                    totalHarvest: '85.5kg',
+                    t7l: {
+                        harvest: '40kg',
+                        ripeness: '95%',
+                        startArea: 'エリア1 通路1',
+                        endArea: 'エリア5 通路1',
+                        direction: '時計回り'
+                    },
+                    t7r: {
+                        harvest: '40kg',
+                        ripeness: '95%',
+                        startArea: 'エリア8 通路5',
+                        endArea: 'エリア4 通路5',
+                        direction: '反時計回り'
+                    }
+                },
+                2: {
+                    date: '2024/12/19',
+                    startTime: '09:00',
+                    endTime: '12:30',
+                    totalHarvest: '92.3kg',
+                    t7l: {
+                        harvest: '40kg',
+                        ripeness: '98%',
+                        startArea: 'エリア1 通路1',
+                        endArea: 'エリア5 通路1',
+                        direction: '時計回り'
+                    },
+                    t7r: {
+                        harvest: '40kg',
+                        ripeness: '98%',
+                        startArea: 'エリア8 通路5',
+                        endArea: 'エリア4 通路5',
+                        direction: '反時計回り'
+                    }
+                },
+                3: {
+                    date: '2024/12/18',
+                    startTime: '08:00',
+                    endTime: '10:45',
+                    totalHarvest: '78.8kg',
+                    t7l: {
+                        harvest: '0kg',
+                        ripeness: '-',
+                        startArea: '-',
+                        endArea: '-',
+                        direction: '-'
+                    },
+                    t7r: {
+                        harvest: '80kg',
+                        ripeness: '93%',
+                        startArea: 'エリア1 通路1',
+                        endArea: 'エリア8 通路5',
+                        direction: '反時計回り'
+                    }
+                }
+            };
+            
+            const detail = logDetails[logId];
+            
+            content.innerHTML = `
+                <div style="display: grid; gap: 15px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
+                        <div><strong>収穫日:</strong> ${detail.date}</div>
+                        <div><strong>総収穫量:</strong> ${detail.totalHarvest}</div>
+                        <div><strong>開始時刻:</strong> ${detail.startTime}</div>
+                        <div><strong>終了時刻:</strong> ${detail.endTime}</div>
+                    </div>
+                    
+                    <div style="border: 2px solid #FF6B6B; border-radius: 5px; padding: 15px;">
+                        <h4 style="color: #FF6B6B; margin-bottom: 10px;">T7L 設定</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div><strong>収穫量:</strong> ${detail.t7l.harvest}</div>
+                            <div><strong>完熟度:</strong> ${detail.t7l.ripeness}</div>
+                            <div><strong>開始位置:</strong> ${detail.t7l.startArea}</div>
+                            <div><strong>終了位置:</strong> ${detail.t7l.endArea}</div>
+                            <div><strong>回転方向:</strong> ${detail.t7l.direction}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="border: 2px solid #4A90E2; border-radius: 5px; padding: 15px;">
+                        <h4 style="color: #4A90E2; margin-bottom: 10px;">T7R 設定</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div><strong>収穫量:</strong> ${detail.t7r.harvest}</div>
+                            <div><strong>完熟度:</strong> ${detail.t7r.ripeness}</div>
+                            <div><strong>開始位置:</strong> ${detail.t7r.startArea}</div>
+                            <div><strong>終了位置:</strong> ${detail.t7r.endArea}</div>
+                            <div><strong>回転方向:</strong> ${detail.t7r.direction}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+        
+        // ログ詳細を閉じる
+        function closeLogDetail() {
+            document.getElementById('logDetailModal').style.display = 'none';
+        }
+        
+        // マニュアル内容
+        const manualContentHtml = `
+            <div style="line-height: 1.8; font-size: 16px;">
+                <section style="margin-bottom: 25px;">
+                    <h3 style="color: #66bb6a; margin-bottom: 10px;">1. 作業の流れ</h3>
+                    <ol style="padding-left: 20px;">
+                        <li><strong>収穫設定：</strong> 本アプリで収穫計画を設定する</li>
+                        <li><strong>ロボット移動：</strong> 現場で各ロボットを操作して開始地点まで運ぶ</li>
+                        <li><strong>収穫実行：</strong> 現場で設定確認後、収穫を開始する</li>
+                        <li><strong>エラー対応：</strong> エラー発生時の対応と復旧作業</li>
+                        <li><strong>収穫後作業：</strong> トマトを回収してロボットを充電する</li>
+                    </ol>
+                </section>
+                
+                <section style="margin-bottom: 25px;">
+                    <h3 style="color: #66bb6a; margin-bottom: 10px;">2. 収穫設定手順</h3>
+                    <ol style="padding-left: 20px;">
+                        <li>各ロボットの状態と位置を確認</li>
+                        <li><strong>クイック設定</strong>からプリセットを選択</li>
+                        <li><strong>詳細設定</strong>を確認・編集</li>
+                        <li>「経路確認」で移動軌跡を確認</li>
+                        <li>「確定」で各ロボットに設定を送信</li>
+                    </ol>
+                </section>
+                
+                <section style="margin-bottom: 25px;">
+                    <h3 style="color: #66bb6a; margin-bottom: 10px;">3. 現場でのロボット操作</h3>
+                    <h4 style="color: #81c784; margin: 10px 0;">移動準備</h4>
+                    <ul style="padding-left: 20px;">
+                        <li>ロボットに空の収穫カゴをセット</li>
+                        <li>ジョイスティックで開始地点まで移動</li>
+                        <li>通路の障害物を確認</li>
+                    </ul>
+                    
+                    <h4 style="color: #81c784; margin: 10px 0;">収穫開始</h4>
+                    <ul style="padding-left: 20px;">
+                        <li>ロボット搭載ディスプレイで設定確認</li>
+                        <li>ロボット搭載物理ボタンを押して収穫開始</li>
+                    </ul>
+                    
+                    <h4 style="color: #81c784; margin: 10px 0;">収穫後</h4>
+                    <ul style="padding-left: 20px;">
+                        <li>収穫カゴを回収</li>
+                        <li>ジョイスティックで充電地点まで移動</li>
+                        <li>充電開始</li>
+                    </ul>
+                </section>
+                
+                <section style="margin-bottom: 25px;">
+                    <h3 style="color: #66bb6a; margin-bottom: 10px;">4. マップの見方</h3>
+                    <ul style="padding-left: 20px;">
+                        <li><strong>エリア：</strong> 農場は8つのエリアに分割（北側1-4、南側5-8）</li>
+                        <li><strong>通路：</strong> 各エリアに5つの通路（1-5の番号付き）</li>
+                        <li><strong>畝：</strong> 黄緑色の線で表示（各エリア4本）</li>
+                        <li><strong>ロボット位置：</strong> 三角形マーカー（T7L:赤、T7R:青）</li>
+                        <li><strong>充電ステーション：</strong> 西側（左側）に配置</li>
+                    </ul>
+                </section>
+                
+                <section style="margin-bottom: 25px; background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3;">
+                    <h3 style="color: #1565c0; margin-bottom: 10px;">💡 エラー対応</h3>
+                    <ul style="padding-left: 20px;">
+                        <li><strong>バンパー反応でロボットが停止した場合：</strong>
+                            <ul style="padding-left: 20px;">
+                                <li>ロボット搭載ディスプレイの指示に従い、障害物を除去</li>
+                                <li>「再開」ボタンを押して収穫を続行</li>
+                            </ul>
+                        </li>
+                        <li><strong>吸引エラーでロボットが停止した場合：</strong>
+                            <ul style="padding-left: 20px;">
+                                <li>ロボット搭載ディスプレイの指示に従い、吸引物を除去</li>
+                                <li>「再開」ボタンを押して収穫を続行</li>
+                            </ul>
+                        </li>
+                        <li><strong>ソフトウェアエラー：</strong> Slackで開発者に連絡する</li>
+                        <li><strong>ロボットが暴走した場合：</strong> 非常停止ボタンまたは無線リモコンで即時停止する</li>
+                    </ul>
+                </section>
+                
+                <section style="margin-bottom: 25px; background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <h3 style="color: #856404; margin-bottom: 10px;">⚠️ 注意事項</h3>
+                    <ul style="padding-left: 20px;">
+                        <li>作業前に必ず周囲の安全を確認すること</li>
+                    </ul>
+                </section>
+                
+                <section style="margin-bottom: 25px;">
+                    <h3 style="color: #66bb6a; margin-bottom: 10px;">5. 過去の収穫記録</h3>
+                    <p>過去の収穫記録を確認できます。各記録の「詳細」ボタンから、その時の設定内容（開始/終了位置、収穫量、完熟度など）を確認可能です。</p>
+                </section>
+            </div>
+        `;
+
+        // マニュアルを表示
+        function showManual() {
+            document.getElementById('manualContent').innerHTML = manualContentHtml;
+            document.getElementById('manualModal').style.display = 'block';
+        }
+        
+        // マニュアルを閉じる
+        function closeManual() {
+            document.getElementById('manualModal').style.display = 'none';
+        }
 
         // プリセット設定
         function applyPreset() {
@@ -597,16 +939,31 @@
             
             if (selectedPreset === 'two-robots') {
                 // 2台で全面収穫（デフォルト設定）
-                // T7L: エリア1から4を担当
+                // T7L: エリア1から5通路1まで担当
                 document.getElementById('startArea1').value = '1';
                 document.getElementById('startLane1').value = '1';
-                document.getElementById('endArea1').value = '4';
+                document.getElementById('endArea1').value = '5';
+                document.getElementById('endLane1').value = '1';
+                document.getElementById('direction1').value = 'right';
+                
+                // T7R: エリア8通路5から4通路5まで担当
+                document.getElementById('startArea2').value = '8';
+                document.getElementById('startLane2').value = '5';
+                document.getElementById('endArea2').value = '4';
+                document.getElementById('endLane2').value = '5';
+                document.getElementById('direction2').value = 'left';
+            } else if (selectedPreset === 'left-robot-only') {
+                // T7Lで全面収穫
+                // T7L: 全エリアを担当
+                document.getElementById('startArea1').value = '1';
+                document.getElementById('startLane1').value = '1';
+                document.getElementById('endArea1').value = '8';
                 document.getElementById('endLane1').value = '5';
                 document.getElementById('direction1').value = 'right';
                 
-                // T7R: エリア5から8を担当
-                document.getElementById('startArea2').value = '5';
-                document.getElementById('startLane2').value = '1';
+                // T7R: 無効化（同じ位置に設定）
+                document.getElementById('startArea2').value = '8';
+                document.getElementById('startLane2').value = '5';
                 document.getElementById('endArea2').value = '8';
                 document.getElementById('endLane2').value = '5';
                 document.getElementById('direction2').value = 'left';
@@ -626,7 +983,7 @@
                 document.getElementById('endLane2').value = '5';
                 document.getElementById('direction2').value = 'left';
             }
-            // カスタムの場合は現在の設定を維持
+            // カスタム収穫1,2の場合は現在の設定を維持
             
             // 元の状態に戻す
             selects.forEach((select, index) => {
@@ -640,21 +997,21 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         
-        // スケール設定（1m = 10px - コンパクトに表示）
-        const scale = 10;
-        const farmWidth = 32 * scale; // 320px
-        const farmHeight = 62.5 * scale; // 625px
-        const centralPathWidth = 2.5 * scale; // 25px
-        const ridgeWidth = 0.6 * scale; // 6px
-        const ridgeLength = 30 * scale; // 300px
-        const pathWidth = 1 * scale; // 10px
-        const pillarSize = 0.3 * scale; // 3px
-        const areaWidth = 8 * scale; // 80px
+        // スケール設定（1m = 15px - 1.5倍に拡大）
+        const scale = 15;
+        const farmWidth = 32 * scale; // 480px
+        const farmHeight = 62.5 * scale; // 937.5px
+        const centralPathWidth = 2.5 * scale; // 37.5px
+        const ridgeWidth = 0.6 * scale; // 9px
+        const ridgeLength = 30 * scale; // 450px
+        const pathWidth = 1 * scale; // 15px
+        const pillarSize = 0.3 * scale; // 4.5px
+        const areaWidth = 8 * scale; // 120px
         
         // マージンを追加（充電ステーション分も考慮）
-        const leftMargin = 65; // 充電ステーション用の幅い余白
-        const rightMargin = 15; // 右側の細い余白
-        const topBottomMargin = 15; // 上下の余白
+        const leftMargin = 98; // 充電ステーション用の幅い余白（1.5倍）
+        const rightMargin = 23; // 右側の細い余白（1.5倍）
+        const topBottomMargin = 23; // 上下の余白（1.5倍）
         canvas.width = farmWidth + leftMargin + rightMargin;
         canvas.height = farmHeight + topBottomMargin * 2;
         
@@ -674,8 +1031,8 @@
         
         // ロボットの位置情報（充電ステーション内）
         let robotPositions = {
-            robot1: { x: leftMargin - 40, y: topBottomMargin + farmHeight / 2 - 10, angle: 0 }, // T7L - 充電ステーション内
-            robot2: { x: leftMargin - 20, y: topBottomMargin + farmHeight / 2 + 10, angle: 0 }  // T7R - 充電ステーション内
+            robot1: { x: leftMargin - 60, y: topBottomMargin + farmHeight / 2 - 15, angle: 0 }, // T7L - 充電ステーション内
+            robot2: { x: leftMargin - 30, y: topBottomMargin + farmHeight / 2 + 15, angle: 0 }  // T7R - 充電ステーション内
         };
         
         function drawFarm() {
@@ -707,9 +1064,12 @@
                     areaY = centralPathY + centralPathWidth;
                 }
                 
-                // 畝を描画
+                // 畝を描画（エリア幅を5等分して、柱と柱の間に畝を配置）
+                // エリア幅 = 120px、5つの通路（各24px）に分割
+                const laneWidth = areaWidth / 5; // 24px per lane
                 for (let j = 0; j < 4; j++) {
-                    const ridgeX = areaX + pathWidth + j * (ridgeWidth + pathWidth);
+                    // 各畝を通路の中央に配置（通路1と5を除く）
+                    const ridgeX = areaX + (j + 1) * laneWidth - ridgeWidth / 2;
                     let ridgeY, adjustedRidgeLength;
                     
                     if (row === 0) {
@@ -743,15 +1103,15 @@
             ctx.strokeRect(leftMargin, topBottomMargin, farmWidth, farmHeight);
             
             // 充電ステーションを描画（西側、中央通路の左端に接して）
-            const chargingStationSize = 60; // 2倍のサイズ
+            const chargingStationSize = 90; // 1.5倍のサイズ
             const chargingStationX = leftMargin - chargingStationSize; // 右端が中央通路の左端に接する
             const chargingStationY = centralPathY + (centralPathWidth - chargingStationSize) / 2;
             
             // 充電場所のラベル（上に表示）
             ctx.fillStyle = colors.text;
-            ctx.font = 'bold 14px Arial';
+            ctx.font = 'bold 21px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('充電場所', chargingStationX + chargingStationSize / 2, chargingStationY - 5);
+            ctx.fillText('充電場所', chargingStationX + chargingStationSize / 2, chargingStationY - 8);
             
             // 充電ステーション本体
             ctx.fillStyle = colors.chargingStation;
@@ -762,12 +1122,12 @@
             
             // エリア番号を最前面に表示（各エリアの南北方向の中央）
             ctx.fillStyle = colors.text;
-            ctx.font = 'bold 14px Arial';
+            ctx.font = 'bold 21px Arial';
             ctx.textAlign = 'left';
             for (let i = 0; i < 8; i++) {
                 const row = i < 4 ? 0 : 1;
                 const col = i % 4;
-                const areaX = leftMargin + col * areaWidth + areaWidth / 2 - 20;
+                const areaX = leftMargin + col * areaWidth + areaWidth / 2 - 30;
                 let textY;
                 
                 if (row === 0) {
@@ -785,6 +1145,37 @@
                 ctx.fillText(`エリア${i + 1}`, areaX, textY);
             }
             
+            // 通路番号を表示（各エリアの通路に対して）
+            ctx.fillStyle = colors.text;
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            
+            for (let i = 0; i < 8; i++) {
+                const row = i < 4 ? 0 : 1;
+                const col = i % 4;
+                const areaX = leftMargin + col * areaWidth;
+                
+                // 各エリアに5つの通路番号を表示
+                const laneWidth = areaWidth / 5; // エリア幅を5等分
+                for (let j = 0; j < 5; j++) {
+                    // 各通路の中央に番号を配置
+                    const laneX = areaX + (j + 0.5) * laneWidth;
+                    
+                    let laneY;
+                    if (row === 0) {
+                        // 北側エリア - 上部に表示
+                        laneY = topBottomMargin + 40;
+                    } else {
+                        // 南側エリア - 下部に表示
+                        laneY = topBottomMargin + farmHeight - 20;
+                    }
+                    
+                    // 通路番号を表示
+                    ctx.fillStyle = colors.text;
+                    ctx.fillText(`${j + 1}`, laneX, laneY);
+                }
+            }
+            
             // ロボットを描画
             drawRobot(1, robotPositions.robot1.x, robotPositions.robot1.y, robotPositions.robot1.angle, colors.robot1);
             drawRobot(2, robotPositions.robot2.x, robotPositions.robot2.y, robotPositions.robot2.angle, colors.robot2);
@@ -797,7 +1188,7 @@
             ctx.rotate(angle * Math.PI / 180);
             
             // 二等辺三角形のサイズ
-            const size = 8;
+            const size = 12;
             
             ctx.beginPath();
             ctx.moveTo(size, 0);           // 先端（進行方向）
@@ -858,9 +1249,11 @@
             
             isEditMode = true;
             const selects = document.querySelectorAll('#detailSettings select');
+            const inputs = document.querySelectorAll('#detailSettings input[type="text"]');
             
-            // セレクトボックスを有効化
+            // セレクトボックスと入力フィールドを有効化
             selects.forEach(select => select.disabled = false);
+            inputs.forEach(input => input.disabled = false);
             
             // ボタン状態を更新
             updateButtonStates();
@@ -886,9 +1279,11 @@
         function exitEditMode() {
             isEditMode = false;
             const selects = document.querySelectorAll('#detailSettings select');
+            const inputs = document.querySelectorAll('#detailSettings input[type="text"]');
             
-            // セレクトボックスを無効化
+            // セレクトボックスと入力フィールドを無効化
             selects.forEach(select => select.disabled = true);
+            inputs.forEach(input => input.disabled = true);
             
             // ボタン状態を更新
             updateButtonStates();
