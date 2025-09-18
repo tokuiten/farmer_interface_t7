@@ -734,10 +734,15 @@
                 const col = areaIndex % 4;
                 
                 // 北側エリア（1-4）は通路2,3,4,5、南側エリア（5-8）は通路4,3,2,1を使用
+                // ただし、エリア2（area=2）の場合は通路5が存在しない
                 let lanes;
                 if (row === 0) {
                     // 北側: 通路1をスキップ
-                    lanes = [2, 3, 4, 5];
+                    if (areaNum === 2) {
+                        lanes = [2, 3, 4]; // エリア2は通路5なし
+                    } else {
+                        lanes = [2, 3, 4, 5];
+                    }
                 } else {
                     // 南側: 通路5をスキップ
                     lanes = [4, 3, 2, 1];
@@ -845,13 +850,18 @@
                 const col = areaIndex % 4;
                 
                 // 南側エリア（5-8）は通路5,4,3,2、北側エリア（1-4）は通路1,2,3,4を使用
+                // ただし、エリア2（area=2）の場合は通路5が存在しないためたぬき号は通路4もスキップ
                 let lanes;
                 if (row === 1) {
                     // 南側: 通路1をスキップ
                     lanes = [5, 4, 3, 2];
                 } else {
                     // 北側: 通路5をスキップ
-                    lanes = [1, 2, 3, 4];
+                    if (areaNum === 2) {
+                        lanes = [1, 2, 3]; // エリア2は通路5なし、たぬき号は通路4もスキップ
+                    } else {
+                        lanes = [1, 2, 3, 4];
+                    }
                 }
                 
                 lanes.forEach((laneNum, laneIndex) => {
@@ -1655,6 +1665,7 @@
             
             // エリアと畝を描画
             for (let i = 0; i < 8; i++) {
+                const areaNum = i + 1; // エリア番号（1-8）
                 const row = i < 4 ? 0 : 1;
                 const col = i % 4;
                 const areaX = leftMargin + col * areaWidth;
@@ -1671,7 +1682,9 @@
                 // 畝を描画（エリア幅を5等分して、柱と柱の間に畝を配置）
                 // エリア幅 = 120px、5つの通路（各24px）に分割
                 const laneWidth = areaWidth / 5; // 24px per lane
-                for (let j = 0; j < 4; j++) {
+                // エリア2（areaNum=2）の場合のみ3つの畝、その他は4つの畝
+                const ridgeCount = (areaNum === 2) ? 3 : 4;
+                for (let j = 0; j < ridgeCount; j++) {
                     // 各畝を通路の中央に配置（通路1と5を除く）
                     const ridgeX = areaX + (j + 1) * laneWidth - ridgeWidth / 2;
                     let ridgeY, adjustedRidgeLength;
@@ -1762,9 +1775,10 @@
                 const col = i % 4;
                 const areaX = leftMargin + col * areaWidth;
                 
-                // 各エリアに5つの通路番号を表示
+                // 各エリアに5つの通路番号を表示（エリア2は4つ）
                 const laneWidth = areaWidth / 5; // エリア幅を5等分
-                for (let j = 0; j < 5; j++) {
+                const maxLanes = (i === 1) ? 4 : 5; // エリア2（i=1）は通路4まで
+                for (let j = 0; j < maxLanes; j++) {
                     // 各通路の中央に番号を配置
                     const laneX = areaX + (j + 0.5) * laneWidth;
                     
@@ -1915,7 +1929,12 @@
                 let lanes;
                 if (row === 0) {
                     // 北側エリア: 通路1をスキップして2,3,4,5
-                    lanes = [2, 3, 4, 5];
+                    // ただし、エリア2（col=1）の場合は通路5が存在しない
+                    if (col === 1) {
+                        lanes = [2, 3, 4]; // エリア2は通路5なし
+                    } else {
+                        lanes = [2, 3, 4, 5];
+                    }
                 } else {
                     // 南側エリア: 通路5をスキップして4,3,2,1
                     lanes = [4, 3, 2, 1];
@@ -1979,7 +1998,12 @@
                 let lanes;
                 if (row === 0) {
                     // 北側エリア: 通路5をスキップして1,2,3,4
-                    lanes = [1, 2, 3, 4];
+                    // ただし、エリア2（col=1）の場合は通路4もスキップ
+                    if (col === 1) {
+                        lanes = [1, 2, 3]; // エリア2は通路5なし、たぬき号は通路4もスキップ
+                    } else {
+                        lanes = [1, 2, 3, 4];
+                    }
                 } else {
                     // 南側エリア: 通路1をスキップして5,4,3,2
                     lanes = [5, 4, 3, 2];
