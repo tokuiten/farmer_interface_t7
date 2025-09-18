@@ -337,7 +337,9 @@
                         <option value="custom2">カスタム収穫2</option>
                     </select>
                     <button onclick="calculatePaths()" style="background-color: #66bb6a; color: white; font-size: 20px; padding: 10px 20px;">経路確認</button>
-                    <button onclick="clearPath()" style="background-color: #81c784; color: white; font-size: 20px; padding: 10px 20px;">クリア</button>
+                    <button onclick="clearPath()" style="background-color: #66bb6a; color: white; font-size: 20px; padding: 10px 20px;">経路クリア</button>
+                    <button id="playBtn" onclick="startAnimation()" style="background-color: #999; color: white; border: none; font-size: 20px; padding: 10px 15px; margin-left: 10px;" disabled>▶</button>
+                    <button id="stopBtn" onclick="stopAnimation()" style="background-color: #999; color: white; border: none; font-size: 20px; padding: 10px 15px; margin-left: 5px;" disabled>⏹</button>
                 </div>
             </div>
             
@@ -595,6 +597,7 @@
                     <div id="sendResultContent"></div>
                 </div>
             </div>
+            
         </div>
 
         <div class="map-panel">
@@ -661,29 +664,269 @@
             // updateRobotStatus(2, randomState2);
         }, 5000); // 5秒ごとに更新（デモ用、実際はコメントアウト）
 
+        // 経路を保存する配列
+        let currentPaths = [];
+        
         // ロボット設定の基本関数
         function calculatePaths() {
             console.log('経路計算を実行');
-            document.getElementById('animateBtn').disabled = false;
+            
+            // 現在のプリセットを取得
+            const presetSelect = document.getElementById('presetSelect');
+            const selectedPreset = presetSelect.value;
+            
+            // 経路をクリア
+            currentPaths = [];
+            
+            if (selectedPreset === 'left-robot-only') {
+                // きつね号で全面収穫の経路を計算
+                calculateKitsunePath();
+            }
+            // 他のプリセットの経路計算は必要に応じて追加
+            
+            // 経路を描画
+            drawFarm();
+            
+            // アニメーションボタンを有効化
+            updateAnimationButtons();
         }
 
         function clearPath() {
             console.log('経路をクリア');
-            document.getElementById('animateBtn').disabled = true;
+            // アニメーションを停止
+            if (isAnimating) {
+                stopAnimation();
+            }
+            // 経路データをクリア
+            currentPaths = [];
+            // きつね号を充電ステーションに戻す
+            robotPositions.robot1 = { x: leftMargin - 60, y: topBottomMargin + farmHeight / 2 - 15, angle: 0 };
             // キャンバスを再描画
             drawFarm();
+            // アニメーションボタンを無効化
+            updateAnimationButtons();
+        }
+        
+        // アニメーションボタンの状態を更新
+        function updateAnimationButtons() {
+            const hasPath = currentPaths.length > 0;
+            const playBtn = document.getElementById('playBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            
+            if (hasPath && !isAnimating) {
+                playBtn.disabled = false;
+                stopBtn.disabled = true;
+            } else if (!hasPath) {
+                playBtn.disabled = true;
+                stopBtn.disabled = true;
+            }
+        }
+        
+        // きつね号の全面収穫経路を計算
+        function calculateKitsunePath() {
+            // エリアの順番: 1,2,3,4,8,7,6,5（時計回り）
+            const areaOrder = [1, 2, 3, 4, 8, 7, 6, 5];
+            
+            currentPaths = [];
+            
+            // きつね号の初期位置をエリア1通路2に設定
+            const initialLaneX = leftMargin + 0 * areaWidth + (2 - 0.5) * (areaWidth / 5);
+            const centralY = topBottomMargin + farmHeight / 2;
+            updateRobotPosition(1, initialLaneX, centralY - centralPathWidth/2, 270); // 北向き
+            
+            areaOrder.forEach(areaNum => {
+                const areaIndex = areaNum - 1;
+                const row = areaIndex < 4 ? 0 : 1;
+                const col = areaIndex % 4;
+                
+                // 北側エリア（1-4）は通路2,3,4,5、南側エリア（5-8）は通路4,3,2,1を使用
+                let lanes;
+                if (row === 0) {
+                    // 北側: 通路1をスキップ（左に畝がない）
+                    lanes = [2, 3, 4, 5];
+                } else {
+                    // 南側: 通路5をスキップ（左に畝がない）、逆順
+                    lanes = [4, 3, 2, 1];
+                }
+                
+                lanes.forEach((laneNum, laneIndex) => {
+                    // 通路の位置を計算
+                    const laneWidth = areaWidth / 5;
+                    const laneX = leftMargin + col * areaWidth + (laneNum - 0.5) * laneWidth;
+                    
+                    // 開始点（中央通路の真ん中）
+                    const startY = topBottomMargin + farmHeight / 2;
+                    
+                    // 終了点（エリアの端まで）
+                    let endY;
+                    if (row === 0) {
+                        // 北側エリア - 上端まで
+                        endY = topBottomMargin + pathWidth;
+                    } else {
+                        // 南側エリア - 下端まで
+                        endY = topBottomMargin + farmHeight - pathWidth;
+                    }
+                    
+                    // 前進パス（中央通路から端へ）
+                    currentPaths.push({
+                        type: 'forward',
+                        startX: laneX,
+                        startY: startY,
+                        endX: laneX,
+                        endY: endY,
+                        area: areaNum,
+                        lane: laneNum
+                    });
+                    
+                    // バックパス（端から中央通路へ）
+                    currentPaths.push({
+                        type: 'backward',
+                        startX: laneX,
+                        startY: endY,
+                        endX: laneX,
+                        endY: startY,
+                        area: areaNum,
+                        lane: laneNum
+                    });
+                    
+                    // 次の通路への移動（中央通路を通って）
+                    if (laneIndex < lanes.length - 1) {
+                        const nextLaneX = leftMargin + col * areaWidth + (lanes[laneIndex + 1] - 0.5) * laneWidth;
+                        currentPaths.push({
+                            type: 'transit',
+                            startX: laneX,
+                            startY: startY,
+                            endX: nextLaneX,
+                            endY: startY,
+                            area: areaNum
+                        });
+                    }
+                });
+                
+                // 次のエリアへの移動（中央通路を通って）
+                if (areaOrder.indexOf(areaNum) < areaOrder.length - 1) {
+                    const nextAreaNum = areaOrder[areaOrder.indexOf(areaNum) + 1];
+                    const nextAreaIndex = nextAreaNum - 1;
+                    const nextRow = nextAreaIndex < 4 ? 0 : 1;
+                    const nextCol = nextAreaIndex % 4;
+                    
+                    // 現在のエリアの最後の通路
+                    const currentLastLane = row === 0 ? 5 : 1;
+                    const currentLastLaneX = leftMargin + col * areaWidth + (currentLastLane - 0.5) * (areaWidth / 5);
+                    
+                    // 次のエリアの最初の通路
+                    const nextFirstLane = nextRow === 0 ? 2 : 4;
+                    const nextFirstLaneX = leftMargin + nextCol * areaWidth + (nextFirstLane - 0.5) * (areaWidth / 5);
+                    
+                    const currentY = topBottomMargin + farmHeight / 2;
+                    
+                    currentPaths.push({
+                        type: 'transit',
+                        startX: currentLastLaneX,
+                        startY: currentY,
+                        endX: nextFirstLaneX,
+                        endY: currentY,
+                        area: areaNum,
+                        nextArea: nextAreaNum
+                    });
+                }
+            });
         }
 
+        // アニメーション関連の変数
+        let animationId = null;
+        let currentPathIndex = 0;
+        let animationProgress = 0;
+        let isAnimating = false;
+
         function startAnimation() {
+            if (currentPaths.length === 0) return;
+            
             console.log('アニメーション開始');
-            document.getElementById('animateBtn').disabled = true;
+            isAnimating = true;
+            currentPathIndex = 0;
+            animationProgress = 0;
+            
+            // ボタン状態を更新
+            document.getElementById('playBtn').disabled = true;
             document.getElementById('stopBtn').disabled = false;
+            
+            // アニメーションループを開始
+            animate();
         }
 
         function stopAnimation() {
             console.log('アニメーション停止');
-            document.getElementById('animateBtn').disabled = false;
+            isAnimating = false;
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            // きつね号を初期位置に戻す
+            if (currentPaths.length > 0) {
+                const initialLaneX = leftMargin + 0 * areaWidth + (2 - 0.5) * (areaWidth / 5);
+                const centralY = topBottomMargin + farmHeight / 2;
+                updateRobotPosition(1, initialLaneX, centralY - centralPathWidth/2, 270);
+            }
+            
+            // ボタン状態を更新
+            document.getElementById('playBtn').disabled = false;
             document.getElementById('stopBtn').disabled = true;
+        }
+
+        function animate() {
+            if (!isAnimating || currentPaths.length === 0) return;
+            
+            const speed = 6; // アニメーション速度（2倍速）
+            
+            if (currentPathIndex < currentPaths.length) {
+                const currentPath = currentPaths[currentPathIndex];
+                
+                // 現在のパスでの位置を計算
+                const startX = currentPath.startX;
+                const startY = currentPath.startY;
+                const endX = currentPath.endX;
+                const endY = currentPath.endY;
+                
+                const x = startX + (endX - startX) * animationProgress;
+                const y = startY + (endY - startY) * animationProgress;
+                
+                // 進行方向を計算
+                let angle = 0;
+                
+                // エリアの位置を判定
+                const areaNum = currentPath.area;
+                const isNorthArea = areaNum <= 4;
+                
+                if (isNorthArea) {
+                    angle = 270; // 北エリア：北向き
+                } else {
+                    angle = 90; // 南エリア：南向き
+                }
+                
+                // きつね号の位置を更新
+                updateRobotPosition(1, x, y, angle);
+                
+                // 進行状況を更新
+                animationProgress += speed / 100;
+                
+                if (animationProgress >= 1) {
+                    // 次のパスに移動
+                    currentPathIndex++;
+                    animationProgress = 0;
+                    
+                    if (currentPathIndex >= currentPaths.length) {
+                        // アニメーション完了
+                        stopAnimation();
+                        return;
+                    }
+                }
+            }
+            
+            // 次のフレームをリクエスト
+            animationId = requestAnimationFrame(animate);
         }
 
         // アコーディオンの開閉
@@ -1228,6 +1471,9 @@
             ctx.lineWidth = 2;
             ctx.strokeRect(chargingStationX, chargingStationY, chargingStationSize, chargingStationSize);
             
+            // 方位マークを表示
+            drawCompass();
+            
             // エリア番号を最前面に表示（各エリアの南北方向の中央）
             ctx.fillStyle = colors.text;
             ctx.font = 'bold 21px Arial';
@@ -1284,9 +1530,52 @@
                 }
             }
             
+            // 経路を描画（ロボットより先に描画して背景に配置）
+            if (currentPaths.length > 0) {
+                drawPaths();
+            }
+            
             // ロボットを描画
-            drawRobot(1, robotPositions.robot1.x, robotPositions.robot1.y, robotPositions.robot1.angle, colors.robot1);
+            // 経路表示中はきつね号を薄い色で表示
+            const robot1Color = currentPaths.length > 0 ? '#FFB3B3' : colors.robot1;
+            drawRobot(1, robotPositions.robot1.x, robotPositions.robot1.y, robotPositions.robot1.angle, robot1Color);
             drawRobot(2, robotPositions.robot2.x, robotPositions.robot2.y, robotPositions.robot2.angle, colors.robot2);
+        }
+        
+        // 経路を描画する関数
+        function drawPaths() {
+            ctx.save();
+            
+            // 点線のスタイル設定
+            ctx.setLineDash([5, 5]); // 5px描画、5px空白
+            ctx.lineWidth = 2;
+            
+            currentPaths.forEach(path => {
+                ctx.beginPath();
+                
+                // きつね号の経路は全て赤色
+                ctx.strokeStyle = '#FF6B6B';
+                
+                // 線を描画
+                ctx.moveTo(path.startX, path.startY);
+                ctx.lineTo(path.endX, path.endY);
+                ctx.stroke();
+            });
+            
+            ctx.restore();
+        }
+        
+        // 方位マークを描画
+        function drawCompass() {
+            if (compassImg.complete && compassImg.naturalHeight !== 0) {
+                // 元画像の1/8のサイズで表示
+                const imgWidth = compassImg.naturalWidth / 8;
+                const imgHeight = compassImg.naturalHeight / 8;
+                const compassX = 10;
+                const compassY = 10;
+                
+                ctx.drawImage(compassImg, compassX, compassY, imgWidth, imgHeight);
+            }
         }
         
         // ロボットを二等辺三角形で描画
@@ -1319,6 +1608,14 @@
             robotPositions[`robot${robotId}`] = { x, y, angle };
             drawFarm(); // マップを再描画
         }
+        
+        // 方位マーク画像を事前に読み込み
+        const compassImg = new Image();
+        compassImg.src = 'N.png';
+        compassImg.onload = function() {
+            // 画像読み込み完了後に再描画
+            drawFarm();
+        };
         
         // 初期描画
         drawFarm();
